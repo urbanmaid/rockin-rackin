@@ -123,10 +123,19 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         }
 
         ReadTiltInput();
-        UpdateTilt();
         UpdatePlayerActions();
         UpdateHealthAndSpawns();
         CheckOutOfBounds();
+    }
+
+    private void FixedUpdate()
+    {
+        if (gameOver || upgradeOpen || stageRoot == null)
+        {
+            return;
+        }
+
+        UpdateTilt();
     }
 
     private void BuildInputActions()
@@ -269,7 +278,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         Transform stagePlane = stageRoot.Find("Primitive Plane Stage");
         if (stagePlane != null)
         {
-            stagePlane.localPosition = Vector3.zero;
+            //stagePlane.localPosition = Vector3.zero;
             //stagePlane.localScale = Vector3.one * (fieldSize / 10f);
             //stageCollider = stagePlane.GetComponent<Collider>();
         }
@@ -316,7 +325,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         player.transform.localScale = Vector3.one * 1.1f;
 
         playerBody = player.GetComponent<Rigidbody>();
-        ConfigureBallBody(playerBody, 1.15f, 0.15f);
+        //ConfigureBallBody(playerBody, 1.15f, 0.15f);
 
         RollingBallAgent agent = player.GetComponent<RollingBallAgent>();
         if (playerBody == null || agent == null)
@@ -355,7 +364,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
             return;
         }
 
-        ConfigureBallBody(body, 0.9f, 0.08f);
+        //ConfigureBallBody(body, 0.9f, 0.08f);
         agent.Configure(this, true, enemyHealth);
         enemies.Add(agent);
     }
@@ -404,17 +413,35 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         bool boost = boostAction.IsPressed();
         float tiltDegrees = boost ? boostTiltDegrees : baseTiltDegrees;
         previousSmoothedTilt = smoothedTilt;
-        smoothedTilt = Vector2.Lerp(smoothedTilt, targetTilt, 1f - Mathf.Exp(-tiltSmoothing * Time.deltaTime));
+        smoothedTilt = Vector2.Lerp(smoothedTilt, targetTilt, 1f - Mathf.Exp(-tiltSmoothing * Time.fixedDeltaTime));
 
-        stageRoot.rotation = Quaternion.Euler(smoothedTilt.y * tiltDegrees, 0f, -smoothedTilt.x * tiltDegrees);
+        Quaternion targetRotation = Quaternion.Euler(smoothedTilt.y * tiltDegrees, 0f, -smoothedTilt.x * tiltDegrees);
+        ApplyStageRotationAroundPlayer(targetRotation);
 
-        float tiltSpeed = (smoothedTilt - previousSmoothedTilt).magnitude * tiltDegrees / Mathf.Max(Time.deltaTime, 0.0001f);
+        float tiltSpeed = (smoothedTilt - previousSmoothedTilt).magnitude * tiltDegrees / Mathf.Max(Time.fixedDeltaTime, 0.0001f);
         /*
         if (tiltSpeed >= suddenTiltLiftThreshold)
         {
             LiftNearbyEnemies(Mathf.InverseLerp(suddenTiltLiftThreshold, suddenTiltLiftThreshold * 2f, tiltSpeed));
         }
         */
+    }
+
+    private void ApplyStageRotationAroundPlayer(Quaternion targetRotation)
+    {
+        if (playerBody == null)
+        {
+            stageRoot.rotation = targetRotation;
+            return;
+        }
+
+        Vector3 pivotWorld = playerBody.position;
+        Vector3 pivotLocal = stageRoot.InverseTransformPoint(pivotWorld);
+
+        stageRoot.rotation = targetRotation;
+
+        Vector3 pivotAfterRotation = stageRoot.TransformPoint(pivotLocal);
+        stageRoot.position += pivotWorld - pivotAfterRotation;
     }
 
     private void LiftNearbyEnemies(float strength)
@@ -512,7 +539,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         if (IsOutsideField(playerBody.position))
         {
             DamagePlayer(fallDamage);
-            ResetBody(playerBody, Vector3.up * 1.4f);
+            ResetBody(playerBody, stageRoot.transform.position + Vector3.up * 1.4f);
         }
 
         for (int i = enemies.Count - 1; i >= 0; i--)
@@ -534,7 +561,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     private bool IsOutsideField(Vector3 position)
     {
         float limit = fieldSize * 0.5f + 1.7f;
-        return Mathf.Abs(position.x) > limit || Mathf.Abs(position.z) > limit || position.y < -5f;
+        return Mathf.Abs(position.x) > limit || Mathf.Abs(position.z) > limit || position.y < stageRoot.transform.position.y - limit;
     }
 
     private static void ResetBody(Rigidbody body, Vector3 position)

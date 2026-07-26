@@ -26,6 +26,11 @@ public sealed class RollingBallAgent : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (isEnemy || toPlayer.sqrMagnitude > 0.2f)
+        {
+            Body.AddForce(toPlayer.normalized * controller.EnemyHomingForce, ForceMode.Acceleration);
+        }
+
         if (Body == null)
         {
             return;

@@ -476,10 +476,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a7f547c8b3e472fa9854efcb8142da6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fieldSize: 26
-  baseTiltDegrees: 18
+  fieldSize: 30
+  baseTiltDegrees: 17.5
   boostTiltDegrees: 23
-  tiltSmoothing: 7.5
+  tiltSmoothing: 9
   suddenTiltLiftThreshold: 80
   suddenTiltLiftImpulse: 7
   suddenTiltRadius: 5.5
@@ -491,7 +491,7 @@ MonoBehaviour:
   pushRadius: 5
   pushImpulse: 13
   pushCooldownSeconds: 5
-  startingEnemies: 1
+  startingEnemies: 2
   maxEnemies: 24
   enemySpawnInterval: 4.5
   enemyHealth: 35
