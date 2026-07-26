@@ -90,7 +90,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 0}
+  - {fileID: 2100000, guid: 49c2399f116b4de1af4583023673854b, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -122,8 +122,8 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1209678972099091929}
   serializedVersion: 5
-  m_Mass: 1.15
-  m_LinearDamping: 0.15
+  m_Mass: 0.4
+  m_LinearDamping: 0.02
   m_AngularDamping: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
@@ -150,6 +150,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 1209678972099091929}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 7ca0213e0e9641e9a19059eed26523bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RollingBallAgent

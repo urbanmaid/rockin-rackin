@@ -51,7 +51,7 @@ SphereCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7419302969649071944}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 13400000, guid: 26a23cbfc115f4c4fb37d0c9241f591b, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -90,7 +90,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 0}
+  - {fileID: 2100000, guid: 328325fbbd10419aa9e9b9d7bb058828, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -122,8 +122,8 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7419302969649071944}
   serializedVersion: 5
-  m_Mass: 0.9
-  m_LinearDamping: 0.08
+  m_Mass: 0.35
+  m_LinearDamping: 0.02
   m_AngularDamping: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
@@ -150,6 +150,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 7419302969649071944}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
+  m_Script: {fileID: 11500000, guid: 7ca0213e0e9641e9a19059eed26523bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RollingBallAgent

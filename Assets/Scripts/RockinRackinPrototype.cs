@@ -39,19 +39,21 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     [SerializeField] private float healthSpawnInterval = 2.8f;
     [SerializeField] private float healthRestore = 16f;
 
+    [Header("Templates")]
+    [SerializeField] private GameObject stageTemplate;
+    [SerializeField] private GameObject playerTemplate;
+    [SerializeField] private GameObject enemyTemplate;
+    [SerializeField] private GameObject healthPickupTemplate;
+
     private readonly List<RollingBallAgent> enemies = new();
     private readonly List<HealthPickup> pickups = new();
     private readonly List<UpgradeOption> pendingUpgrades = new();
 
     private Transform stageRoot;
+    private Transform healthItemRoot;
     private Collider stageCollider;
     private Rigidbody playerBody;
     private Camera mainCamera;
-    private Material playerMaterial;
-    private Material enemyMaterial;
-    private Material pickupMaterial;
-    private Material stageMaterial;
-    private Material dangerMaterial;
     private InputAction tiltAction;
     private InputAction pushAction;
     private InputAction boostAction;
@@ -231,28 +233,11 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         mainCamera.farClipPlane = 120f;
         mainCamera.fieldOfView = 55f;
 
-        CreateMaterials();
+        stageRoot = InstantiateRequired(stageTemplate, Vector3.zero, Quaternion.identity, transform).transform;
+        stageRoot.name = "Tilting Stage Root";
+        ConfigureStageInstance();
 
-        GameObject root = new GameObject("Prototype Runtime Objects");
-        root.transform.SetParent(transform);
-
-        stageRoot = new GameObject("Tilting Stage Root").transform;
-        stageRoot.SetParent(root.transform);
-
-        GameObject stage = GameObject.CreatePrimitive(PrimitiveType.Plane);
-        stage.name = "Primitive Plane Stage";
-        stage.transform.SetParent(stageRoot);
-        stage.transform.localPosition = Vector3.zero;
-        stage.transform.localScale = Vector3.one * (fieldSize / 10f);
-        stage.GetComponent<Renderer>().sharedMaterial = stageMaterial;
-        stageCollider = stage.GetComponent<Collider>();
-
-        CreateEdgeMarker(stageRoot, "North Edge", new Vector3(0f, -0.02f, fieldSize * 0.5f), new Vector3(fieldSize, 0.05f, 0.25f));
-        CreateEdgeMarker(stageRoot, "South Edge", new Vector3(0f, -0.02f, -fieldSize * 0.5f), new Vector3(fieldSize, 0.05f, 0.25f));
-        CreateEdgeMarker(stageRoot, "East Edge", new Vector3(fieldSize * 0.5f, -0.02f, 0f), new Vector3(0.25f, 0.05f, fieldSize));
-        CreateEdgeMarker(stageRoot, "West Edge", new Vector3(-fieldSize * 0.5f, -0.02f, 0f), new Vector3(0.25f, 0.05f, fieldSize));
-
-        CreatePlayer();
+        SpawnPlayer(transform);
 
         for (int i = 0; i < startingEnemies; i++)
         {
@@ -265,55 +250,82 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         }
     }
 
-    private void CreateMaterials()
+    private GameObject InstantiateRequired(GameObject template, Vector3 position, Quaternion rotation, Transform parent)
     {
-        playerMaterial = CreateMaterial("Player Blue", new Color(0.1f, 0.48f, 0.95f));
-        enemyMaterial = CreateMaterial("Enemy Red", new Color(0.9f, 0.16f, 0.12f));
-        pickupMaterial = CreateMaterial("Health Green", new Color(0.25f, 0.95f, 0.35f));
-        stageMaterial = CreateMaterial("Stage Gray", new Color(0.42f, 0.45f, 0.48f));
-        dangerMaterial = CreateMaterial("Danger Edge", new Color(1f, 0.72f, 0.16f));
-    }
-
-    private static Material CreateMaterial(string name, Color color)
-    {
-        Shader shader = Shader.Find("Universal Render Pipeline/Lit");
-        if (shader == null)
+        if (template == null)
         {
-            shader = Shader.Find("Standard");
+            Debug.LogError("Prototype template reference is missing.", this);
+            enabled = false;
+            return new GameObject("Missing Prototype Template");
         }
 
-        Material material = new Material(shader) { name = name };
-        material.color = color;
-        return material;
+        GameObject instance = Instantiate(template, position, rotation, parent);
+        instance.SetActive(true);
+        return instance;
     }
 
-    private void CreateEdgeMarker(Transform parent, string objectName, Vector3 position, Vector3 scale)
+    private void ConfigureStageInstance()
     {
-        GameObject marker = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        marker.name = objectName;
-        marker.transform.SetParent(parent);
-        marker.transform.localPosition = position;
-        marker.transform.localScale = scale;
-        marker.GetComponent<Renderer>().sharedMaterial = dangerMaterial;
-        Destroy(marker.GetComponent<Collider>());
+        Transform stagePlane = stageRoot.Find("Primitive Plane Stage");
+        if (stagePlane != null)
+        {
+            stagePlane.localPosition = Vector3.zero;
+            //stagePlane.localScale = Vector3.one * (fieldSize / 10f);
+            //stageCollider = stagePlane.GetComponent<Collider>();
+        }
+        else
+        {
+            stageCollider = stageRoot.GetComponentInChildren<Collider>();
+        }
+
+        ConfigureEdgeMarker("North Edge", new Vector3(0f, -0.02f, fieldSize * 0.5f), new Vector3(fieldSize, 0.05f, 0.25f));
+        ConfigureEdgeMarker("South Edge", new Vector3(0f, -0.02f, -fieldSize * 0.5f), new Vector3(fieldSize, 0.05f, 0.25f));
+        ConfigureEdgeMarker("East Edge", new Vector3(fieldSize * 0.5f, -0.02f, 0f), new Vector3(0.25f, 0.05f, fieldSize));
+        ConfigureEdgeMarker("West Edge", new Vector3(-fieldSize * 0.5f, -0.02f, 0f), new Vector3(0.25f, 0.05f, fieldSize));
+
+        healthItemRoot = stageRoot.Find("Health Item");
+        if (healthItemRoot == null)
+        {
+            Debug.LogWarning("Health Item parent was not found under the stage. Health pickups will use the stage root.", stageRoot);
+            healthItemRoot = stageRoot;
+        }
+        else
+        {
+            healthItemRoot.localPosition = Vector3.zero;
+            healthItemRoot.localRotation = Quaternion.identity;
+            healthItemRoot.localScale = Vector3.one;
+        }
     }
 
-    private void CreatePlayer()
+    private void ConfigureEdgeMarker(string markerName, Vector3 position, Vector3 scale)
     {
-        GameObject player = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        Transform marker = stageRoot.Find(markerName);
+        if (marker == null)
+        {
+            return;
+        }
+
+        marker.localPosition = position;
+        marker.localScale = scale;
+    }
+
+    private void SpawnPlayer(Transform parent)
+    {
+        GameObject player = InstantiateRequired(playerTemplate, new Vector3(0f, 1.2f, 0f), Quaternion.identity, parent);
         player.name = "Player Sphere";
-        player.transform.position = new Vector3(0f, 1.2f, 0f);
         player.transform.localScale = Vector3.one * 1.1f;
-        player.GetComponent<Renderer>().sharedMaterial = playerMaterial;
 
-        playerBody = player.AddComponent<Rigidbody>();
-        playerBody.mass = 1.15f;
-        playerBody.linearDamping = 0.15f;
-        playerBody.angularDamping = 0.05f;
-        playerBody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-        playerBody.interpolation = RigidbodyInterpolation.Interpolate;
+        playerBody = player.GetComponent<Rigidbody>();
+        ConfigureBallBody(playerBody, 1.15f, 0.15f);
 
-        RollingBallAgent agent = player.AddComponent<RollingBallAgent>();
+        RollingBallAgent agent = player.GetComponent<RollingBallAgent>();
+        if (playerBody == null || agent == null)
+        {
+            Debug.LogError("Player template must include Rigidbody and RollingBallAgent.", player);
+            enabled = false;
+            return;
+        }
+
         agent.Configure(this, false, maxHealth);
     }
 
@@ -330,20 +342,20 @@ public sealed class RockinRackinPrototype : MonoBehaviour
             position += position.normalized * 4f;
         }
 
-        GameObject enemy = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        GameObject enemy = InstantiateRequired(enemyTemplate, position + Vector3.up * 1.1f, Quaternion.identity, transform);
         enemy.name = "Enemy Sphere";
-        enemy.transform.position = position + Vector3.up * 1.1f;
         enemy.transform.localScale = Vector3.one * 0.95f;
-        enemy.GetComponent<Renderer>().sharedMaterial = enemyMaterial;
 
-        Rigidbody body = enemy.AddComponent<Rigidbody>();
-        body.mass = 0.9f;
-        body.linearDamping = 0.08f;
-        body.angularDamping = 0.05f;
-        body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-        body.interpolation = RigidbodyInterpolation.Interpolate;
+        RollingBallAgent agent = enemy.GetComponent<RollingBallAgent>();
+        Rigidbody body = enemy.GetComponent<Rigidbody>();
+        if (body == null || agent == null)
+        {
+            Debug.LogError("Enemy template must include Rigidbody and RollingBallAgent.", enemy);
+            Destroy(enemy);
+            return;
+        }
 
-        RollingBallAgent agent = enemy.AddComponent<RollingBallAgent>();
+        ConfigureBallBody(body, 0.9f, 0.08f);
         agent.Configure(this, true, enemyHealth);
         enemies.Add(agent);
     }
@@ -355,22 +367,25 @@ public sealed class RockinRackinPrototype : MonoBehaviour
             return;
         }
 
-        GameObject pickup = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        pickup.name = "Health Pickup";
-        pickup.transform.position = RandomPointOnStage(2f) + Vector3.up * 0.45f;
-        pickup.transform.localScale = Vector3.one * 0.55f;
-        pickup.GetComponent<Renderer>().sharedMaterial = pickupMaterial;
+        CreatePickup("Health Pickup", RandomPointOnStage(2f) + Vector3.up * 0.45f, Vector3.one * 0.55f);
+    }
 
-        Collider pickupCollider = pickup.GetComponent<Collider>();
-        pickupCollider.isTrigger = true;
+    private static void ConfigureBallBody(Rigidbody body, float mass, float damping)
+    {
+        if (body == null)
+        {
+            return;
+        }
 
-        Rigidbody body = pickup.AddComponent<Rigidbody>();
-        body.isKinematic = true;
-        body.useGravity = false;
-
-        HealthPickup pickupComponent = pickup.AddComponent<HealthPickup>();
-        pickupComponent.Configure(this);
-        pickups.Add(pickupComponent);
+        body.mass = mass;
+        body.linearDamping = damping;
+        body.angularDamping = 0.05f;
+        body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        body.interpolation = RigidbodyInterpolation.Interpolate;
+        body.isKinematic = false;
+        body.useGravity = true;
+        body.linearVelocity = Vector3.zero;
+        body.angularVelocity = Vector3.zero;
     }
 
     private Vector3 RandomPointOnStage(float margin)
@@ -394,10 +409,12 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         stageRoot.rotation = Quaternion.Euler(smoothedTilt.y * tiltDegrees, 0f, -smoothedTilt.x * tiltDegrees);
 
         float tiltSpeed = (smoothedTilt - previousSmoothedTilt).magnitude * tiltDegrees / Mathf.Max(Time.deltaTime, 0.0001f);
+        /*
         if (tiltSpeed >= suddenTiltLiftThreshold)
         {
             LiftNearbyEnemies(Mathf.InverseLerp(suddenTiltLiftThreshold, suddenTiltLiftThreshold * 2f, tiltSpeed));
         }
+        */
     }
 
     private void LiftNearbyEnemies(float strength)
@@ -588,21 +605,43 @@ public sealed class RockinRackinPrototype : MonoBehaviour
             return;
         }
 
-        GameObject pickup = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-        pickup.name = "Dropped Health Pickup";
-        pickup.transform.position = new Vector3(
-            Mathf.Clamp(position.x, -fieldSize * 0.45f, fieldSize * 0.45f),
+        Vector3 localPosition = healthItemRoot.InverseTransformPoint(position);
+        CreatePickup("Dropped Health Pickup", new Vector3(
+            Mathf.Clamp(localPosition.x, -fieldSize * 0.45f, fieldSize * 0.45f),
             0.45f,
-            Mathf.Clamp(position.z, -fieldSize * 0.45f, fieldSize * 0.45f));
-        pickup.transform.localScale = Vector3.one * 0.62f;
-        pickup.GetComponent<Renderer>().sharedMaterial = pickupMaterial;
-        pickup.GetComponent<Collider>().isTrigger = true;
+            Mathf.Clamp(localPosition.z, -fieldSize * 0.45f, fieldSize * 0.45f)),
+            Vector3.one * 0.62f);
+    }
 
-        Rigidbody body = pickup.AddComponent<Rigidbody>();
-        body.isKinematic = true;
-        body.useGravity = false;
+    private void CreatePickup(string pickupName, Vector3 localPosition, Vector3 scale)
+    {
+        GameObject pickup = InstantiateRequired(healthPickupTemplate, Vector3.zero, Quaternion.identity, healthItemRoot);
+        pickup.name = pickupName;
+        pickup.transform.localPosition = localPosition;
+        pickup.transform.localRotation = Quaternion.identity;
+        pickup.transform.localScale = scale;
 
-        HealthPickup pickupComponent = pickup.AddComponent<HealthPickup>();
+        Collider pickupCollider = pickup.GetComponent<Collider>();
+        if (pickupCollider != null)
+        {
+            pickupCollider.isTrigger = true;
+        }
+
+        Rigidbody body = pickup.GetComponent<Rigidbody>();
+        if (body != null)
+        {
+            body.isKinematic = true;
+            body.useGravity = false;
+        }
+
+        HealthPickup pickupComponent = pickup.GetComponent<HealthPickup>();
+        if (pickupComponent == null)
+        {
+            Debug.LogError("Health pickup template must include HealthPickup.", pickup);
+            Destroy(pickup);
+            return;
+        }
+
         pickupComponent.Configure(this);
         pickups.Add(pickupComponent);
     }
@@ -753,112 +792,5 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         BoostTilt,
         PushCooldown,
         Luck
-    }
-}
-
-public sealed class RollingBallAgent : MonoBehaviour
-{
-    private RockinRackinPrototype controller;
-    private bool isEnemy;
-    private Vector3 previousVelocity;
-
-    public Rigidbody Body { get; private set; }
-    public float Health { get; set; }
-
-    public void Configure(RockinRackinPrototype owner, bool enemy, float health)
-    {
-        controller = owner;
-        isEnemy = enemy;
-        Health = health;
-        Body = GetComponent<Rigidbody>();
-    }
-
-    private void FixedUpdate()
-    {
-        if (Body == null)
-        {
-            return;
-        }
-
-        previousVelocity = Body.linearVelocity;
-
-        if (!isEnemy || controller == null || controller.PlayerBody == null)
-        {
-            return;
-        }
-
-        Vector3 toPlayer = controller.PlayerBody.position - Body.position;
-        toPlayer.y = 0f;
-        if (toPlayer.sqrMagnitude > 0.2f)
-        {
-            Body.AddForce(toPlayer.normalized * controller.EnemyHomingForce, ForceMode.Acceleration);
-        }
-    }
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (controller == null)
-        {
-            return;
-        }
-
-        if (isEnemy && controller.IsStageCollider(collision.collider))
-        {
-            controller.HandleEnemyLanding(this, previousVelocity);
-        }
-
-        TryDamagePlayer(collision.collider);
-    }
-
-    private void OnCollisionStay(Collision collision)
-    {
-        TryDamagePlayer(collision.collider);
-    }
-
-    private void TryDamagePlayer(Collider other)
-    {
-        if (controller == null || isEnemy)
-        {
-            return;
-        }
-
-        RollingBallAgent otherBall = other.GetComponent<RollingBallAgent>();
-        if (otherBall != null && otherBall.isEnemy)
-        {
-            controller.DamagePlayer(controller.ContactDamage);
-        }
-    }
-}
-
-public sealed class HealthPickup : MonoBehaviour
-{
-    private RockinRackinPrototype controller;
-
-    public void Configure(RockinRackinPrototype owner)
-    {
-        controller = owner;
-    }
-
-    private void Update()
-    {
-        transform.Rotate(0f, 150f * Time.deltaTime, 0f, Space.World);
-    }
-
-    private void OnTriggerEnter(Collider other)
-    {
-        if (controller == null || other.GetComponent<RollingBallAgent>() == null || other.name != "Player Sphere")
-        {
-            return;
-        }
-
-        controller.CollectPickup(this);
-    }
-
-    private void OnDestroy()
-    {
-        if (controller != null)
-        {
-            controller.NotifyPickupDestroyed(this);
-        }
     }
 }
