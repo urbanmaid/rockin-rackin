@@ -17,20 +17,10 @@ public sealed class RollingBallAgent : MonoBehaviour
         isEnemy = enemy;
         Health = health;
         Body = GetComponent<Rigidbody>();
-
-        if (!isEnemy || toPlayer.sqrMagnitude > 0.2f)
-        {
-            Body.AddForce(toPlayer.normalized * controller.EnemyHomingForce, ForceMode.Acceleration);
-        }
     }
 
     private void FixedUpdate()
     {
-        if (isEnemy || toPlayer.sqrMagnitude > 0.2f)
-        {
-            Body.AddForce(toPlayer.normalized * controller.EnemyHomingForce, ForceMode.Acceleration);
-        }
-
         if (Body == null)
         {
             return;
@@ -45,6 +35,10 @@ public sealed class RollingBallAgent : MonoBehaviour
 
         toPlayer = controller.PlayerBody.position - Body.position;
         toPlayer.y = 0f;
+        if (toPlayer.sqrMagnitude > 0.2f)
+        {
+            Body.AddForce(toPlayer.normalized * controller.EnemyHomingForce, ForceMode.Acceleration);
+        }
     }
 
     private void OnCollisionEnter(Collision collision)

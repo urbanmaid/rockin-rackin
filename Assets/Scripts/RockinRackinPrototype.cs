@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine.InputSystem;
 using UnityEngine;
+using UnityEngine.UI;
 
 public sealed class RockinRackinPrototype : MonoBehaviour
 {
@@ -33,6 +35,15 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     [SerializeField] private float landingDamageVelocity = 6.5f;
     [SerializeField] private float landingDamageMultiplier = 7f;
 
+    [Header("Enemy Difficulty")]
+    [SerializeField] private float enemyDifficultyStepSeconds = 20f;
+    [SerializeField] private int enemySpawnBatchSize = 4;
+    [SerializeField] private int enemySpawnBatchIncrease = 2;
+    [SerializeField] private int maxEnemySpawnBatchSize = 8;
+    [SerializeField] private float enemySpawnIntervalDecreasePerCycle = 0.2f;
+    [SerializeField] private float minEnemySpawnInterval = 1.5f;
+    [SerializeField] private float enemyHomingForceMultiplierPerMinute = 1.1f;
+
     [Header("Pickups")]
     [SerializeField] private int startingPickups = 8;
     [SerializeField] private int maxPickups = 18;
@@ -44,6 +55,16 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     [SerializeField] private GameObject playerTemplate;
     [SerializeField] private GameObject enemyTemplate;
     [SerializeField] private GameObject healthPickupTemplate;
+
+    [Header("Graphic UI")]
+    [SerializeField] private bool useGraphicUI;
+    [SerializeField] private Image pushCooldownFillImage;
+    [SerializeField] private Image healthFillImage;
+    [SerializeField] private TextMeshProUGUI healthLevelText;
+    [SerializeField] private TextMeshProUGUI levelText;
+    [SerializeField] private TextMeshProUGUI scoreProgressText;
+    [SerializeField] private TextMeshProUGUI survivalTimeText;
+    [SerializeField] private TextMeshProUGUI gameOverSurvivalTimeText;
 
     private readonly List<RollingBallAgent> enemies = new();
     private readonly List<HealthPickup> pickups = new();
@@ -62,10 +83,13 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     private Vector2 targetTilt;
     private Vector2 smoothedTilt;
     private Vector2 previousSmoothedTilt;
+    private float smoothedTiltDegrees;
     private float health;
     private float invulnerableTimer;
     private float pushCooldownTimer;
     private float enemySpawnTimer;
+    private float survivalTime;
+    private float finalSurvivalTime;
     private float pickupSpawnTimer;
     private float luck;
     private int score;
@@ -75,7 +99,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     private bool gameOver;
 
     public Rigidbody PlayerBody => playerBody;
-    public float EnemyHomingForce => enemyHomingForce;
+    public float EnemyHomingForce => enemyHomingForce * Mathf.Pow(Mathf.Max(0.01f, enemyHomingForceMultiplierPerMinute), survivalTime / 60f);
     public float ContactDamage => contactDamage;
 
     private void Awake()
@@ -83,6 +107,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         Physics.gravity = new Vector3(0f, -16f, 0f);
         Time.timeScale = 1f;
         health = maxHealth;
+        smoothedTiltDegrees = baseTiltDegrees;
         BuildInputActions();
         BuildScene();
     }
@@ -203,17 +228,16 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         Vector3 wantedPosition = playerBody.position + new Vector3(0f, 13f, -11f);
         mainCamera.transform.position = Vector3.Lerp(mainCamera.transform.position, wantedPosition, Time.unscaledDeltaTime * 7f);
         mainCamera.transform.rotation = Quaternion.Euler(52f, 0f, 0f);
+
+        UpdateGameplayUI();
     }
 
     private void OnGUI()
     {
-        const int width = 310;
-        GUI.Box(new Rect(12, 12, width, 126), string.Empty);
-        GUI.Label(new Rect(26, 24, width - 28, 22), $"Health {Mathf.CeilToInt(health)} / {Mathf.CeilToInt(maxHealth)}");
-        GUI.HorizontalScrollbar(new Rect(26, 48, width - 44, 18), 0f, health, 0f, maxHealth);
-        GUI.Label(new Rect(26, 70, width - 28, 22), $"Score {score}    Level {level}    Next {nextUpgradeScore}");
-        string pushText = pushCooldownTimer <= 0f ? "Push Ready" : $"Push {pushCooldownTimer:0.0}s";
-        GUI.Label(new Rect(26, 94, width - 28, 22), $"{pushText}    Luck +{luck:0%}");
+        if (!useGraphicUI)
+        {
+            DrawFallbackStatusUI();
+        }
 
         if (upgradeOpen)
         {
@@ -222,9 +246,88 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
         if (gameOver)
         {
-            GUI.Box(new Rect(Screen.width * 0.5f - 170f, Screen.height * 0.5f - 58f, 340f, 116f), "Game Over");
-            GUI.Label(new Rect(Screen.width * 0.5f - 132f, Screen.height * 0.5f - 20f, 264f, 24f), "R 키를 눌러 다시 시작");
+            GUI.Box(new Rect(Screen.width * 0.5f - 170f, Screen.height * 0.5f - 72f, 340f, 144f), "Game Over");
+            GUI.Label(new Rect(Screen.width * 0.5f - 132f, Screen.height * 0.5f - 30f, 264f, 24f), $"Survived {FormatSurvivalTime(finalSurvivalTime)}");
+            GUI.Label(new Rect(Screen.width * 0.5f - 132f, Screen.height * 0.5f + 4f, 264f, 24f), "R 키를 눌러 다시 시작");
         }
+    }
+
+    private void UpdateGameplayUI()
+    {
+        if (!useGraphicUI)
+        {
+            return;
+        }
+
+        UpdateGraphicUI();
+    }
+
+    private void UpdateGraphicUI()
+    {
+        SetRadialFill(healthFillImage, GetHealthPercent());
+        SetRadialFill(pushCooldownFillImage, GetPushCooldownPercent());
+        SetText(healthLevelText, $"{Mathf.CeilToInt(health)}");
+        SetText(levelText, $"Level {level}");
+        SetText(scoreProgressText, $"{score} / {nextUpgradeScore}");
+        SetText(survivalTimeText, FormatSurvivalTime(survivalTime));
+        SetText(gameOverSurvivalTimeText, gameOver ? FormatSurvivalTime(finalSurvivalTime) : string.Empty);
+    }
+
+    private void DrawFallbackStatusUI()
+    {
+        const int width = 310;
+        GUI.Box(new Rect(12, 12, width, 150), string.Empty);
+        GUI.Label(new Rect(26, 24, width - 28, 22), $"Health {Mathf.CeilToInt(health)} / {Mathf.CeilToInt(maxHealth)}");
+        GUI.HorizontalScrollbar(new Rect(26, 48, width - 44, 18), 0f, health, 0f, maxHealth);
+        GUI.Label(new Rect(26, 70, width - 28, 22), $"Score {score}    Level {level}    Next {nextUpgradeScore}");
+        string pushText = pushCooldownTimer <= 0f ? "Push Ready" : $"Push {pushCooldownTimer:0.0}s";
+        GUI.Label(new Rect(26, 94, width - 28, 22), $"{pushText}    Luck +{luck:0%}");
+        GUI.Label(new Rect(26, 118, width - 28, 22), $"Time {FormatSurvivalTime(gameOver ? finalSurvivalTime : survivalTime)}");
+    }
+
+    private float GetHealthPercent()
+    {
+        return maxHealth > 0f ? Mathf.Clamp01(health / maxHealth) : 0f;
+    }
+
+    private float GetPushCooldownPercent()
+    {
+        if (pushCooldownSeconds <= 0f)
+        {
+            return 1f;
+        }
+
+        return Mathf.Clamp01(1f - pushCooldownTimer / pushCooldownSeconds);
+    }
+
+    private static void SetRadialFill(Image image, float fillAmount)
+    {
+        if (image == null)
+        {
+            return;
+        }
+
+        image.type = Image.Type.Filled;
+        image.fillMethod = Image.FillMethod.Radial360;
+        image.fillAmount = Mathf.Clamp01(fillAmount);
+    }
+
+    private static void SetText(TextMeshProUGUI text, string value)
+    {
+        if (text != null)
+        {
+            text.text = value;
+        }
+    }
+
+    private static string FormatSurvivalTime(float seconds)
+    {
+        float clampedSeconds = Mathf.Max(0f, seconds);
+        int centiseconds = Mathf.FloorToInt(clampedSeconds * 100f);
+        int minutes = centiseconds / 6000;
+        int remainingSeconds = centiseconds / 100 % 60;
+        int remainingCentiseconds = centiseconds % 100;
+        return $"{minutes:00}:{remainingSeconds:00}.{remainingCentiseconds:00}";
     }
 
     private void BuildScene()
@@ -351,7 +454,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
             position += position.normalized * 4f;
         }
 
-        GameObject enemy = InstantiateRequired(enemyTemplate, position + Vector3.up * 1.1f, Quaternion.identity, transform);
+        GameObject enemy = InstantiateRequired(enemyTemplate, position + Vector3.up * 1.1f + stageRoot.transform.position, Quaternion.identity, transform);
         enemy.name = "Enemy Sphere";
         enemy.transform.localScale = Vector3.one * 0.95f;
 
@@ -411,14 +514,16 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     private void UpdateTilt()
     {
         bool boost = boostAction.IsPressed();
-        float tiltDegrees = boost ? boostTiltDegrees : baseTiltDegrees;
+        float targetTiltDegrees = boost ? boostTiltDegrees : baseTiltDegrees;
+        float smoothingFactor = 1f - Mathf.Exp(-tiltSmoothing * Time.fixedDeltaTime);
         previousSmoothedTilt = smoothedTilt;
-        smoothedTilt = Vector2.Lerp(smoothedTilt, targetTilt, 1f - Mathf.Exp(-tiltSmoothing * Time.fixedDeltaTime));
+        smoothedTilt = Vector2.Lerp(smoothedTilt, targetTilt, smoothingFactor);
+        smoothedTiltDegrees = Mathf.Lerp(smoothedTiltDegrees, targetTiltDegrees, smoothingFactor);
 
-        Quaternion targetRotation = Quaternion.Euler(smoothedTilt.y * tiltDegrees, 0f, -smoothedTilt.x * tiltDegrees);
+        Quaternion targetRotation = Quaternion.Euler(smoothedTilt.y * smoothedTiltDegrees, 0f, -smoothedTilt.x * smoothedTiltDegrees);
         ApplyStageRotationAroundPlayer(targetRotation);
 
-        float tiltSpeed = (smoothedTilt - previousSmoothedTilt).magnitude * tiltDegrees / Mathf.Max(Time.fixedDeltaTime, 0.0001f);
+        float tiltSpeed = (smoothedTilt - previousSmoothedTilt).magnitude * smoothedTiltDegrees / Mathf.Max(Time.fixedDeltaTime, 0.0001f);
         /*
         if (tiltSpeed >= suddenTiltLiftThreshold)
         {
@@ -514,16 +619,17 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         if (health <= 0f)
         {
             health = 0f;
-            gameOver = true;
-            Time.timeScale = 0f;
+            EndGame();
             return;
         }
 
         enemySpawnTimer += Time.deltaTime;
-        if (enemySpawnTimer >= enemySpawnInterval)
+        survivalTime += Time.deltaTime;
+        GetEnemySpawnSettings(out float currentEnemySpawnInterval, out int currentEnemySpawnBatchSize);
+        if (enemySpawnTimer >= currentEnemySpawnInterval)
         {
-            enemySpawnTimer = 0f;
-            SpawnEnemy();
+            enemySpawnTimer -= currentEnemySpawnInterval;
+            SpawnEnemyBatch(currentEnemySpawnBatchSize);
         }
 
         pickupSpawnTimer += Time.deltaTime;
@@ -531,6 +637,31 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         {
             pickupSpawnTimer = 0f;
             SpawnPickup();
+        }
+    }
+
+    private void GetEnemySpawnSettings(out float currentInterval, out int currentBatchSize)
+    {
+        int baseBatchSize = Mathf.Max(1, enemySpawnBatchSize);
+        int batchIncrease = Mathf.Max(1, enemySpawnBatchIncrease);
+        int maxBatchSize = Mathf.Max(baseBatchSize, maxEnemySpawnBatchSize);
+        int batchStepCount = Mathf.Max(1, ((maxBatchSize - baseBatchSize) / batchIncrease) + 1);
+        int difficultyStep = enemyDifficultyStepSeconds > 0f
+            ? Mathf.FloorToInt(survivalTime / enemyDifficultyStepSeconds)
+            : 0;
+
+        int batchStep = difficultyStep % batchStepCount;
+        int intervalStep = difficultyStep / batchStepCount;
+        currentBatchSize = Mathf.Min(maxBatchSize, baseBatchSize + batchStep * batchIncrease);
+        currentInterval = Mathf.Max(minEnemySpawnInterval, enemySpawnInterval - intervalStep * enemySpawnIntervalDecreasePerCycle);
+    }
+
+    private void SpawnEnemyBatch(int batchSize)
+    {
+        int spawnCount = Mathf.Min(Mathf.Max(1, batchSize), maxEnemies - enemies.Count);
+        for (int i = 0; i < spawnCount; i++)
+        {
+            SpawnEnemy();
         }
     }
 
@@ -588,9 +719,21 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         invulnerableTimer = invulnerableSeconds;
         if (health <= 0f)
         {
-            gameOver = true;
-            Time.timeScale = 0f;
+            EndGame();
         }
+    }
+
+    private void EndGame()
+    {
+        if (gameOver)
+        {
+            return;
+        }
+
+        finalSurvivalTime = survivalTime;
+        gameOver = true;
+        Time.timeScale = 0f;
+        UpdateGameplayUI();
     }
 
     public void DamageEnemy(RollingBallAgent enemy, float amount)
