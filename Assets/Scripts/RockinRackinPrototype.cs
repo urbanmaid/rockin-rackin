@@ -64,7 +64,11 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     [SerializeField] private TextMeshProUGUI levelText;
     [SerializeField] private TextMeshProUGUI scoreProgressText;
     [SerializeField] private TextMeshProUGUI survivalTimeText;
-    [SerializeField] private TextMeshProUGUI gameOverSurvivalTimeText;
+    //[SerializeField] private TextMeshProUGUI gameOverSurvivalTimeText;
+    [Header("Graphic UI")]
+    [SerializeField] private UpgradeUI upgradeUI;
+    [SerializeField] private GameOverUI gameOverUI;
+    [SerializeField] private string mainMenuSceneName;
 
     private readonly List<RollingBallAgent> enemies = new();
     private readonly List<HealthPickup> pickups = new();
@@ -239,12 +243,12 @@ public sealed class RockinRackinPrototype : MonoBehaviour
             DrawFallbackStatusUI();
         }
 
-        if (upgradeOpen)
+        if (upgradeOpen && upgradeUI == null)
         {
             DrawUpgradePanel();
         }
 
-        if (gameOver)
+        if (gameOver && gameOverUI == null)
         {
             GUI.Box(new Rect(Screen.width * 0.5f - 170f, Screen.height * 0.5f - 72f, 340f, 144f), "Game Over");
             GUI.Label(new Rect(Screen.width * 0.5f - 132f, Screen.height * 0.5f - 30f, 264f, 24f), $"Survived {FormatSurvivalTime(finalSurvivalTime)}");
@@ -270,7 +274,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         SetText(levelText, $"Level {level}");
         SetText(scoreProgressText, $"{score} / {nextUpgradeScore}");
         SetText(survivalTimeText, FormatSurvivalTime(survivalTime));
-        SetText(gameOverSurvivalTimeText, gameOver ? FormatSurvivalTime(finalSurvivalTime) : string.Empty);
+        //SetText(gameOverSurvivalTimeText, gameOver ? FormatSurvivalTime(finalSurvivalTime) : string.Empty);
     }
 
     private void DrawFallbackStatusUI()
@@ -732,6 +736,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
         finalSurvivalTime = survivalTime;
         gameOver = true;
+        gameOverUI?.Show(FormatSurvivalTime(finalSurvivalTime), RestartPrototype, ReturnToMainMenu);
         Time.timeScale = 0f;
         UpdateGameplayUI();
     }
@@ -876,6 +881,8 @@ public sealed class RockinRackinPrototype : MonoBehaviour
             pendingUpgrades.Add(CreateUpgrade(pool[index]));
             pool.RemoveAt(index);
         }
+
+        ShowUpgradeUI();
     }
 
     private UpgradeOption CreateUpgrade(UpgradeKind kind)
@@ -886,38 +893,70 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
         return kind switch
         {
-            UpgradeKind.ItemDensity => new UpgradeOption("체력 아이템 밀도 " + grade, "아이템 생성이 빨라지고 최대 개수가 증가", () =>
+            UpgradeKind.ItemDensity => new UpgradeOption("Health Item Density " + grade, "Health items spawn faster and the item cap increases.", () =>
             {
                 healthSpawnInterval = Mathf.Max(0.75f, healthSpawnInterval - 0.42f * multiplier);
                 maxPickups += highGrade ? 4 : 2;
             }),
-            UpgradeKind.MaxHealth => new UpgradeOption("최대 체력 " + grade, "최대 체력과 현재 체력을 함께 증가", () =>
+            UpgradeKind.MaxHealth => new UpgradeOption("Max Health " + grade, "Increase max health and restore the same amount immediately.", () =>
             {
                 float increase = 18f * multiplier;
                 maxHealth += increase;
                 health = Mathf.Min(maxHealth, health + increase);
             }),
-            UpgradeKind.BoostTilt => new UpgradeOption("더 기울이기 " + grade, "쉬프트/A 버튼의 최대 각도와 띄우기 힘 증가", () =>
+            UpgradeKind.BoostTilt => new UpgradeOption("Tilt Boost " + grade, "Increase boosted tilt angle and lift impulse.", () =>
             {
                 boostTiltDegrees += 3.2f * multiplier;
                 suddenTiltLiftImpulse += 0.9f * multiplier;
             }),
-            UpgradeKind.PushCooldown => new UpgradeOption("밀어내기 쿨타임 " + grade, "스페이스/X 버튼 재사용 시간 감소", () =>
+            UpgradeKind.PushCooldown => new UpgradeOption("Push Cooldown " + grade, "Reduce the push ability cooldown.", () =>
             {
                 pushCooldownSeconds = Mathf.Max(1.2f, pushCooldownSeconds - 0.7f * multiplier);
             }),
-            _ => new UpgradeOption("운 " + grade, "드롭, 고등급 업그레이드, 치명타 확률 증가", () =>
+            _ => new UpgradeOption("Luck " + grade, "Improve item drops, rare upgrade odds, and landing critical chance.", () =>
             {
                 luck += 0.18f * multiplier;
             })
         };
     }
 
+    private void ShowUpgradeUI()
+    {
+        if (upgradeUI == null)
+        {
+            return;
+        }
+
+        UpgradeUI.UpgradeChoice[] choices = new UpgradeUI.UpgradeChoice[pendingUpgrades.Count];
+        for (int i = 0; i < pendingUpgrades.Count; i++)
+        {
+            choices[i] = new UpgradeUI.UpgradeChoice(pendingUpgrades[i].Title, pendingUpgrades[i].Description);
+        }
+
+        upgradeUI.Show(level + 1, "Select one upgrade to continue.", choices, SelectUpgrade);
+    }
+
+    private void SelectUpgrade(int index)
+    {
+        if (!upgradeOpen || index < 0 || index >= pendingUpgrades.Count)
+        {
+            return;
+        }
+
+        pendingUpgrades[index].Apply();
+        level++;
+        nextUpgradeScore += 6 + level * 3;
+        pendingUpgrades.Clear();
+        upgradeOpen = false;
+        upgradeUI?.Hide();
+        Time.timeScale = 1f;
+    }
+
     private void DrawUpgradePanel()
     {
         Rect panel = new Rect(Screen.width * 0.5f - 220f, Screen.height * 0.5f - 128f, 440f, 256f);
         GUI.Box(panel, $"Level {level + 1} Upgrade");
-        GUI.Label(new Rect(panel.x + 24f, panel.y + 34f, panel.width - 48f, 24f), "업그레이드 1개를 선택하세요.");
+        GUI.Label(new Rect(panel.x + 24f, panel.y + 34f, panel.width - 48f, 24f), "Select one upgrade to continue.");
 
         for (int i = 0; i < pendingUpgrades.Count; i++)
         {
@@ -925,12 +964,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
             Rect button = new Rect(panel.x + 24f, panel.y + 70f + i * 54f, panel.width - 48f, 42f);
             if (GUI.Button(button, $"{option.Title}\n{option.Description}"))
             {
-                option.Apply();
-                level++;
-                nextUpgradeScore += 6 + level * 3;
-                pendingUpgrades.Clear();
-                upgradeOpen = false;
-                Time.timeScale = 1f;
+                SelectUpgrade(i);
             }
         }
     }
@@ -939,6 +973,19 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     {
         Time.timeScale = 1f;
         UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex);
+    }
+
+    private void ReturnToMainMenu()
+    {
+        Time.timeScale = 1f;
+
+        if (!string.IsNullOrWhiteSpace(mainMenuSceneName))
+        {
+            UnityEngine.SceneManagement.SceneManager.LoadScene(mainMenuSceneName);
+            return;
+        }
+
+        UnityEngine.SceneManagement.SceneManager.LoadScene(0);
     }
 
     private readonly struct UpgradeOption
