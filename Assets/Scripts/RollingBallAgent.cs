@@ -5,11 +5,13 @@ public sealed class RollingBallAgent : MonoBehaviour
     private RockinRackinPrototype controller;
     private bool isEnemy;
     private Vector3 previousVelocity;
+    private float pushRingOutScoreExpiresAt;
 
     public Rigidbody Body { get; private set; }
     private Vector3 toPlayer = Vector3.zero;
     public float Health { get; set; }
     public bool IsEnemy => isEnemy;
+    public bool IsPushRingOutScoreActive => Time.time <= pushRingOutScoreExpiresAt;
 
     public void Configure(RockinRackinPrototype owner, bool enemy, float health)
     {
@@ -17,6 +19,12 @@ public sealed class RollingBallAgent : MonoBehaviour
         isEnemy = enemy;
         Health = health;
         Body = GetComponent<Rigidbody>();
+        pushRingOutScoreExpiresAt = float.NegativeInfinity;
+    }
+
+    public void MarkPushedForRingOutScore(float duration)
+    {
+        pushRingOutScoreExpiresAt = Mathf.Max(pushRingOutScoreExpiresAt, Time.time + Mathf.Max(0f, duration));
     }
 
     private void FixedUpdate()

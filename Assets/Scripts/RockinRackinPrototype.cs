@@ -12,7 +12,6 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     [SerializeField] private float baseTiltDegrees = 12f;
     [SerializeField] private float boostTiltDegrees = 23f;
     [SerializeField] private float tiltSmoothing = 7.5f;
-    [SerializeField] private float suddenTiltLiftThreshold = 80f;
     [SerializeField] private float suddenTiltLiftImpulse = 7f;
     [SerializeField] private float suddenTiltRadius = 5.5f;
 
@@ -33,7 +32,6 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     [SerializeField] private float enemyHealth = 35f;
     [SerializeField] private float enemyHomingForce = 3.2f;
     [SerializeField] private float landingDamageVelocity = 6.5f;
-    [SerializeField] private float landingDamageMultiplier = 7f;
 
     [Header("Enemy Difficulty")]
     [SerializeField] private float enemyDifficultyStepSeconds = 20f;
@@ -50,6 +48,13 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     [SerializeField] private float healthSpawnInterval = 2.8f;
     [SerializeField] private float healthRestore = 16f;
 
+    [Header("Score")]
+    [SerializeField] private float survivalScoreIntervalSeconds = 0.1f;
+    [SerializeField] private int survivalScorePerInterval = 1;
+    [SerializeField] private int pushRingOutScore = 100;
+    [SerializeField] private int tiltRingOutScore = 25;
+    [SerializeField] private float pushRingOutAttributionSeconds = 2.5f;
+
     [Header("Templates")]
     [SerializeField] private GameObject stageTemplate;
     [SerializeField] private GameObject playerTemplate;
@@ -63,6 +68,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     [SerializeField] private TextMeshProUGUI healthLevelText;
     [SerializeField] private TextMeshProUGUI levelText;
     [SerializeField] private TextMeshProUGUI scoreProgressText;
+    [SerializeField] private TextMeshProUGUI totalScoreText;
     [SerializeField] private TextMeshProUGUI survivalTimeText;
     //[SerializeField] private TextMeshProUGUI gameOverSurvivalTimeText;
     [Header("Graphic UI")]
@@ -96,7 +102,9 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     private float finalSurvivalTime;
     private float pickupSpawnTimer;
     private float luck;
-    private int score;
+    private float survivalScoreTimer;
+    private int totalScore;
+    private int upgradePoints;
     private int level = 1;
     private int nextUpgradeScore = 6;
     private bool upgradeOpen;
@@ -114,6 +122,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         smoothedTiltDegrees = baseTiltDegrees;
         BuildInputActions();
         BuildScene();
+        EnsureTotalScoreText();
     }
 
     private void OnEnable()
@@ -268,11 +277,13 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
     private void UpdateGraphicUI()
     {
+        EnsureTotalScoreText();
         SetRadialFill(healthFillImage, GetHealthPercent());
         SetRadialFill(pushCooldownFillImage, GetPushCooldownPercent());
         SetText(healthLevelText, $"{Mathf.CeilToInt(health)}");
         SetText(levelText, $"Level {level}");
-        SetText(scoreProgressText, $"{score} / {nextUpgradeScore}");
+        SetText(scoreProgressText, $"{upgradePoints} / {nextUpgradeScore}");
+        SetText(totalScoreText, $"{totalScore:N0}");
         SetText(survivalTimeText, FormatSurvivalTime(survivalTime));
         //SetText(gameOverSurvivalTimeText, gameOver ? FormatSurvivalTime(finalSurvivalTime) : string.Empty);
     }
@@ -283,7 +294,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         GUI.Box(new Rect(12, 12, width, 150), string.Empty);
         GUI.Label(new Rect(26, 24, width - 28, 22), $"Health {Mathf.CeilToInt(health)} / {Mathf.CeilToInt(maxHealth)}");
         GUI.HorizontalScrollbar(new Rect(26, 48, width - 44, 18), 0f, health, 0f, maxHealth);
-        GUI.Label(new Rect(26, 70, width - 28, 22), $"Score {score}    Level {level}    Next {nextUpgradeScore}");
+        GUI.Label(new Rect(26, 70, width - 28, 22), $"Score {totalScore}    Level {level}    Points {upgradePoints}/{nextUpgradeScore}");
         string pushText = pushCooldownTimer <= 0f ? "Push Ready" : $"Push {pushCooldownTimer:0.0}s";
         GUI.Label(new Rect(26, 94, width - 28, 22), $"{pushText}    Luck +{luck:0%}");
         GUI.Label(new Rect(26, 118, width - 28, 22), $"Time {FormatSurvivalTime(gameOver ? finalSurvivalTime : survivalTime)}");
@@ -321,6 +332,60 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         if (text != null)
         {
             text.text = value;
+        }
+    }
+
+    private void EnsureTotalScoreText()
+    {
+        if (!useGraphicUI || totalScoreText != null)
+        {
+            return;
+        }
+
+        Canvas canvas = survivalTimeText != null ? survivalTimeText.GetComponentInParent<Canvas>() : null;
+        if (canvas == null)
+        {
+            return;
+        }
+
+        GameObject scoreObject = new GameObject("Total Score Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+        scoreObject.layer = survivalTimeText != null ? survivalTimeText.gameObject.layer : canvas.gameObject.layer;
+        scoreObject.transform.SetParent(canvas.transform, false);
+
+        totalScoreText = scoreObject.GetComponent<TextMeshProUGUI>();
+        totalScoreText.raycastTarget = false;
+        totalScoreText.text = "Score 0";
+        totalScoreText.alignment = TextAlignmentOptions.Right;
+
+        if (survivalTimeText != null)
+        {
+            totalScoreText.font = survivalTimeText.font;
+            totalScoreText.fontSharedMaterial = survivalTimeText.fontSharedMaterial;
+            totalScoreText.color = survivalTimeText.color;
+            totalScoreText.fontSize = Mathf.Max(28f, survivalTimeText.fontSize * 0.7f);
+        }
+        else
+        {
+            totalScoreText.fontSize = 42f;
+        }
+
+        RectTransform rect = totalScoreText.rectTransform;
+        if (survivalTimeText != null)
+        {
+            RectTransform source = survivalTimeText.rectTransform;
+            rect.anchorMin = source.anchorMin;
+            rect.anchorMax = source.anchorMax;
+            rect.pivot = source.pivot;
+            rect.anchoredPosition = source.anchoredPosition + new Vector2(0f, -70f);
+            rect.sizeDelta = new Vector2(Mathf.Max(source.sizeDelta.x, 480f), source.sizeDelta.y);
+        }
+        else
+        {
+            rect.anchorMin = new Vector2(1f, 1f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.pivot = new Vector2(1f, 1f);
+            rect.anchoredPosition = new Vector2(-60f, -120f);
+            rect.sizeDelta = new Vector2(480f, 64f);
         }
     }
 
@@ -613,6 +678,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
             Vector3 direction = offset.normalized;
             direction.y = 0.35f;
+            enemy.MarkPushedForRingOutScore(pushRingOutAttributionSeconds);
             enemy.Body.AddForce(direction.normalized * pushImpulse * (1f - distance / pushRadius), ForceMode.Impulse);
         }
     }
@@ -629,6 +695,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
         enemySpawnTimer += Time.deltaTime;
         survivalTime += Time.deltaTime;
+        UpdateSurvivalScore();
         GetEnemySpawnSettings(out float currentEnemySpawnInterval, out int currentEnemySpawnBatchSize);
         if (enemySpawnTimer >= currentEnemySpawnInterval)
         {
@@ -642,6 +709,34 @@ public sealed class RockinRackinPrototype : MonoBehaviour
             pickupSpawnTimer = 0f;
             SpawnPickup();
         }
+    }
+
+    private void UpdateSurvivalScore()
+    {
+        if (survivalScoreIntervalSeconds <= 0f || survivalScorePerInterval == 0)
+        {
+            return;
+        }
+
+        survivalScoreTimer += Time.deltaTime;
+        int intervalCount = Mathf.FloorToInt(survivalScoreTimer / survivalScoreIntervalSeconds);
+        if (intervalCount <= 0)
+        {
+            return;
+        }
+
+        survivalScoreTimer -= intervalCount * survivalScoreIntervalSeconds;
+        AddScore(intervalCount * survivalScorePerInterval);
+    }
+
+    private void AddScore(int amount)
+    {
+        if (amount == 0)
+        {
+            return;
+        }
+
+        totalScore = Mathf.Max(0, totalScore + amount);
     }
 
     private void GetEnemySpawnSettings(out float currentInterval, out int currentBatchSize)
@@ -688,6 +783,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
             if (IsOutsideField(enemy.transform.position))
             {
+                AddScore(enemy.IsPushRingOutScoreActive ? pushRingOutScore : tiltRingOutScore);
                 DestroyEnemy(enemy, true);
             }
         }
@@ -736,7 +832,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
         finalSurvivalTime = survivalTime;
         gameOver = true;
-        gameOverUI?.Show(FormatSurvivalTime(finalSurvivalTime), RestartPrototype, ReturnToMainMenu);
+        gameOverUI?.Show(FormatSurvivalTime(finalSurvivalTime), totalScore, RestartPrototype, ReturnToMainMenu);
         Time.timeScale = 0f;
         UpdateGameplayUI();
     }
@@ -829,10 +925,10 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         }
 
         health = Mathf.Min(maxHealth, health + healthRestore);
-        score++;
+        upgradePoints++;
         Destroy(pickup.gameObject);
 
-        if (score >= nextUpgradeScore)
+        if (upgradePoints >= nextUpgradeScore)
         {
             OpenUpgradeChoices();
         }
@@ -850,7 +946,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
             return;
         }
 
-        float damage = (-previousVelocity.y - landingDamageVelocity) * landingDamageMultiplier;
+        float damage = -previousVelocity.y - landingDamageVelocity;
         bool critical = UnityEngine.Random.value < luck * 0.12f;
         if (critical)
         {

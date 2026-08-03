@@ -37,7 +37,7 @@ public class GameOverUI : MonoBehaviour
         }
     }
 
-    public void Show(string estimatedTime, Action retryCallback, Action mainMenuCallback)
+    public void Show(string estimatedTime, int score, Action retryCallback, Action mainMenuCallback)
     {
         CacheControls();
         onRetryRequested = retryCallback;
@@ -45,6 +45,12 @@ public class GameOverUI : MonoBehaviour
         gameObject.SetActive(true);
 
         SetText(textEstimatedTime, estimatedTime);
+        ShowScore(score);
+    }
+
+    public void ShowScore(int score)
+    {
+        SetText(textScore, score.ToString("N0"));
     }
 
     public void Hide()
