@@ -1,6 +1,7 @@
 using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class GameOverUI : MonoBehaviour
@@ -46,6 +47,7 @@ public class GameOverUI : MonoBehaviour
 
         SetText(textEstimatedTime, estimatedTime);
         ShowScore(score);
+        SelectDefaultButton();
     }
 
     public void ShowScore(int score)
@@ -88,6 +90,18 @@ public class GameOverUI : MonoBehaviour
         {
             buttonMainMenu.onClick.AddListener(GoToMainMenu);
         }
+    }
+
+    private void SelectDefaultButton()
+    {
+        if (EventSystem.current == null || buttonRetry == null || !buttonRetry.gameObject.activeInHierarchy || !buttonRetry.interactable)
+        {
+            return;
+        }
+
+        EventSystem.current.SetSelectedGameObject(null);
+        EventSystem.current.SetSelectedGameObject(buttonRetry.gameObject);
+        buttonRetry.Select();
     }
 
     private static void SetText(TextMeshProUGUI text, string value)

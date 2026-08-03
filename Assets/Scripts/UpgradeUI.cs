@@ -1,6 +1,7 @@
 using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class UpgradeUI : MonoBehaviour
@@ -49,6 +50,8 @@ public class UpgradeUI : MonoBehaviour
             SetText(buttonDescriptions[i], choices[i].Description);
             buttons[i].onClick.AddListener(() => Select(choiceIndex));
         }
+
+        SelectDefaultButton();
     }
 
     public void Hide()
@@ -68,6 +71,27 @@ public class UpgradeUI : MonoBehaviour
         buttons ??= new[] { buttonMod1, buttonMod2, buttonMod3 };
         buttonTitles ??= new[] { buttonMod1Title, buttonMod2Title, buttonMod3Title };
         buttonDescriptions ??= new[] { buttonMod1Desc, buttonMod2Desc, buttonMod3Desc };
+    }
+
+    private void SelectDefaultButton()
+    {
+        if (EventSystem.current == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < buttons.Length; i++)
+        {
+            if (buttons[i] == null || !buttons[i].gameObject.activeInHierarchy || !buttons[i].interactable)
+            {
+                continue;
+            }
+
+            EventSystem.current.SetSelectedGameObject(null);
+            EventSystem.current.SetSelectedGameObject(buttons[i].gameObject);
+            buttons[i].Select();
+            return;
+        }
     }
 
     private static void SetText(TextMeshProUGUI text, string value)

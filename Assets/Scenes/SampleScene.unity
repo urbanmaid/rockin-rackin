@@ -445,6 +445,11 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_RenderingLayers: 1
   m_ShadowRenderingLayers: 1
+--- !u!1 &654023772 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1796706019044099305, guid: 2c9df8932abcb574b91bfc910ca2c082, type: 3}
+  m_PrefabInstance: {fileID: 38086000499515163}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -621,24 +626,30 @@ MonoBehaviour:
   baseTiltDegrees: 17.5
   boostTiltDegrees: 23
   tiltSmoothing: 9
-  suddenTiltLiftThreshold: 80
   suddenTiltLiftImpulse: 7
   suddenTiltRadius: 5.5
   maxHealth: 100
   passiveHealthDrain: 1
-  contactDamage: 15
+  contactDamage: 10
   fallDamage: 30
   invulnerableSeconds: 0.75
+  enablePushAbility: 1
   pushRadius: 5
-  pushImpulse: 13
+  pushImpulse: 15
   pushCooldownSeconds: 5
+  cameraFieldOfView: 55
+  damageCameraShakeDuration: 0.22
+  damageCameraShakeMagnitude: 0.42
+  damageCameraShakeFrequency: 34
+  pushCameraFovIncrease: 6
+  pushCameraFovExpandDuration: 0.16
+  pushCameraFovRecoverDuration: 0.34
   startingEnemies: 2
   maxEnemies: 10
   enemySpawnInterval: 9
   enemyHealth: 35
   enemyHomingForce: 1
   landingDamageVelocity: 6.5
-  landingDamageMultiplier: 7
   enemyDifficultyStepSeconds: 20
   enemySpawnBatchSize: 3
   enemySpawnBatchIncrease: 1
@@ -646,19 +657,27 @@ MonoBehaviour:
   enemySpawnIntervalDecreasePerCycle: 0.1
   minEnemySpawnInterval: 1.5
   enemyHomingForceMultiplierPerMinute: 1.1
+  maxEnemiesIncreaseIntervalSeconds: 30
+  maxEnemiesIncreasePerStep: 2
+  maxEnemiesAbsoluteLimit: 1972
+  enemySpawnPauseUpgradeSeconds: 8
   startingPickups: 8
   maxPickups: 18
   healthSpawnInterval: 2.8
-  healthRestore: 16
+  healthRestore: 5
   survivalScoreIntervalSeconds: 0.1
   survivalScorePerInterval: 1
   pushRingOutScore: 100
   tiltRingOutScore: 25
   pushRingOutAttributionSeconds: 2.5
+  pushRingOutMinimumPlanarSpeed: 5
   stageTemplate: {fileID: 4632619808178377465, guid: c3e76cbee0d458947ac66ff2c623d41f, type: 3}
   playerTemplate: {fileID: 1209678972099091929, guid: 89aa53db13023c64ebf571369e135be5, type: 3}
   enemyTemplate: {fileID: 7419302969649071944, guid: 49b61dd3724213a42885ab0ea1c686a4, type: 3}
   healthPickupTemplate: {fileID: 4019885223677249585, guid: ba95ab858cbea514d9064d21a4d7a117, type: 3}
+  ingameUIObject:
+  - {fileID: 654023772}
+  - {fileID: 1622754762}
   useGraphicUI: 1
   pushCooldownFillImage: {fileID: 38086000499515168}
   healthFillImage: {fileID: 38086000499515167}
@@ -670,6 +689,11 @@ MonoBehaviour:
   upgradeUI: {fileID: 7943923925636077160}
   gameOverUI: {fileID: 1864266611}
   mainMenuSceneName: SampleScene
+--- !u!1 &1622754762 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3003139195875199838, guid: aa8a3e68d5d7293479ab1795db55654c, type: 3}
+  m_PrefabInstance: {fileID: 5316290460289391020}
+  m_PrefabAsset: {fileID: 0}
 --- !u!114 &1864266611 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2958761692612114264, guid: 1496ea22d307a294d985f681c4c1bdae, type: 3}
@@ -872,6 +896,54 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3402601373221481472, guid: 1532ce7f8728b12459fbe0dbf1732722, type: 3}
+      propertyPath: m_Colors.m_PressedColor.b
+      value: 0.5754717
+      objectReference: {fileID: 0}
+    - target: {fileID: 3402601373221481472, guid: 1532ce7f8728b12459fbe0dbf1732722, type: 3}
+      propertyPath: m_Colors.m_PressedColor.g
+      value: 0.5754717
+      objectReference: {fileID: 0}
+    - target: {fileID: 3402601373221481472, guid: 1532ce7f8728b12459fbe0dbf1732722, type: 3}
+      propertyPath: m_Colors.m_PressedColor.r
+      value: 0.5754717
+      objectReference: {fileID: 0}
+    - target: {fileID: 3402601373221481472, guid: 1532ce7f8728b12459fbe0dbf1732722, type: 3}
+      propertyPath: m_Colors.m_HighlightedColor.b
+      value: 0.745283
+      objectReference: {fileID: 0}
+    - target: {fileID: 3402601373221481472, guid: 1532ce7f8728b12459fbe0dbf1732722, type: 3}
+      propertyPath: m_Colors.m_HighlightedColor.g
+      value: 0.745283
+      objectReference: {fileID: 0}
+    - target: {fileID: 3402601373221481472, guid: 1532ce7f8728b12459fbe0dbf1732722, type: 3}
+      propertyPath: m_Colors.m_HighlightedColor.r
+      value: 0.745283
+      objectReference: {fileID: 0}
+    - target: {fileID: 5123099331474999165, guid: 1532ce7f8728b12459fbe0dbf1732722, type: 3}
+      propertyPath: m_Colors.m_PressedColor.b
+      value: 0.5754717
+      objectReference: {fileID: 0}
+    - target: {fileID: 5123099331474999165, guid: 1532ce7f8728b12459fbe0dbf1732722, type: 3}
+      propertyPath: m_Colors.m_PressedColor.g
+      value: 0.5754717
+      objectReference: {fileID: 0}
+    - target: {fileID: 5123099331474999165, guid: 1532ce7f8728b12459fbe0dbf1732722, type: 3}
+      propertyPath: m_Colors.m_PressedColor.r
+      value: 0.5754717
+      objectReference: {fileID: 0}
+    - target: {fileID: 5123099331474999165, guid: 1532ce7f8728b12459fbe0dbf1732722, type: 3}
+      propertyPath: m_Colors.m_HighlightedColor.b
+      value: 0.745283
+      objectReference: {fileID: 0}
+    - target: {fileID: 5123099331474999165, guid: 1532ce7f8728b12459fbe0dbf1732722, type: 3}
+      propertyPath: m_Colors.m_HighlightedColor.g
+      value: 0.745283
+      objectReference: {fileID: 0}
+    - target: {fileID: 5123099331474999165, guid: 1532ce7f8728b12459fbe0dbf1732722, type: 3}
+      propertyPath: m_Colors.m_HighlightedColor.r
+      value: 0.745283
+      objectReference: {fileID: 0}
     - target: {fileID: 7117717226943321475, guid: 1532ce7f8728b12459fbe0dbf1732722, type: 3}
       propertyPath: m_Name
       value: Upgrade
@@ -879,6 +951,30 @@ PrefabInstance:
     - target: {fileID: 7117717226943321475, guid: 1532ce7f8728b12459fbe0dbf1732722, type: 3}
       propertyPath: m_IsActive
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7307788830829176813, guid: 1532ce7f8728b12459fbe0dbf1732722, type: 3}
+      propertyPath: m_Colors.m_PressedColor.b
+      value: 0.5754717
+      objectReference: {fileID: 0}
+    - target: {fileID: 7307788830829176813, guid: 1532ce7f8728b12459fbe0dbf1732722, type: 3}
+      propertyPath: m_Colors.m_PressedColor.g
+      value: 0.5754717
+      objectReference: {fileID: 0}
+    - target: {fileID: 7307788830829176813, guid: 1532ce7f8728b12459fbe0dbf1732722, type: 3}
+      propertyPath: m_Colors.m_PressedColor.r
+      value: 0.5754717
+      objectReference: {fileID: 0}
+    - target: {fileID: 7307788830829176813, guid: 1532ce7f8728b12459fbe0dbf1732722, type: 3}
+      propertyPath: m_Colors.m_HighlightedColor.b
+      value: 0.745283
+      objectReference: {fileID: 0}
+    - target: {fileID: 7307788830829176813, guid: 1532ce7f8728b12459fbe0dbf1732722, type: 3}
+      propertyPath: m_Colors.m_HighlightedColor.g
+      value: 0.745283
+      objectReference: {fileID: 0}
+    - target: {fileID: 7307788830829176813, guid: 1532ce7f8728b12459fbe0dbf1732722, type: 3}
+      propertyPath: m_Colors.m_HighlightedColor.r
+      value: 0.745283
       objectReference: {fileID: 0}
     - target: {fileID: 7453078462997536657, guid: 1532ce7f8728b12459fbe0dbf1732722, type: 3}
       propertyPath: m_AnchorMax.y

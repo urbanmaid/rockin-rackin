@@ -6,12 +6,12 @@ public sealed class RollingBallAgent : MonoBehaviour
     private bool isEnemy;
     private Vector3 previousVelocity;
     private float pushRingOutScoreExpiresAt;
+    private bool wasAffectedByPushForceField;
 
     public Rigidbody Body { get; private set; }
     private Vector3 toPlayer = Vector3.zero;
     public float Health { get; set; }
     public bool IsEnemy => isEnemy;
-    public bool IsPushRingOutScoreActive => Time.time <= pushRingOutScoreExpiresAt;
 
     public void Configure(RockinRackinPrototype owner, bool enemy, float health)
     {
@@ -20,11 +20,25 @@ public sealed class RollingBallAgent : MonoBehaviour
         Health = health;
         Body = GetComponent<Rigidbody>();
         pushRingOutScoreExpiresAt = float.NegativeInfinity;
+        wasAffectedByPushForceField = false;
     }
 
-    public void MarkPushedForRingOutScore(float duration)
+    public void MarkAffectedByPushForceField(float duration)
     {
+        wasAffectedByPushForceField = true;
         pushRingOutScoreExpiresAt = Mathf.Max(pushRingOutScoreExpiresAt, Time.time + Mathf.Max(0f, duration));
+    }
+
+    public bool HasConfirmedPushRingOut(float minimumPlanarSpeed)
+    {
+        if (!wasAffectedByPushForceField || Time.time > pushRingOutScoreExpiresAt || Body == null)
+        {
+            return false;
+        }
+
+        Vector3 planarVelocity = Body.linearVelocity;
+        planarVelocity.y = 0f;
+        return planarVelocity.sqrMagnitude >= minimumPlanarSpeed * minimumPlanarSpeed;
     }
 
     private void FixedUpdate()

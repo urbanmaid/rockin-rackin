@@ -21,9 +21,19 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     [SerializeField] private float contactDamage = 10f;
     [SerializeField] private float fallDamage = 32f;
     [SerializeField] private float invulnerableSeconds = 0.75f;
+    [SerializeField] private bool enablePushAbility = true;
     [SerializeField] private float pushRadius = 5f;
     [SerializeField] private float pushImpulse = 13f;
     [SerializeField] private float pushCooldownSeconds = 5f;
+
+    [Header("Camera")]
+    [SerializeField] private float cameraFieldOfView = 55f;
+    [SerializeField] private float damageCameraShakeDuration = 0.22f;
+    [SerializeField] private float damageCameraShakeMagnitude = 0.42f;
+    [SerializeField] private float damageCameraShakeFrequency = 34f;
+    [SerializeField] private float pushCameraFovIncrease = 6f;
+    [SerializeField] private float pushCameraFovExpandDuration = 0.16f;
+    [SerializeField] private float pushCameraFovRecoverDuration = 0.34f;
 
     [Header("Enemies")]
     [SerializeField] private int startingEnemies = 10;
@@ -41,6 +51,10 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     [SerializeField] private float enemySpawnIntervalDecreasePerCycle = 0.2f;
     [SerializeField] private float minEnemySpawnInterval = 1.5f;
     [SerializeField] private float enemyHomingForceMultiplierPerMinute = 1.1f;
+    [SerializeField] private float maxEnemiesIncreaseIntervalSeconds = 30f;
+    [SerializeField] private int maxEnemiesIncreasePerStep = 2;
+    [SerializeField] private int maxEnemiesAbsoluteLimit = 40;
+    [SerializeField] private float enemySpawnPauseUpgradeSeconds = 8f;
 
     [Header("Pickups")]
     [SerializeField] private int startingPickups = 8;
@@ -54,6 +68,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     [SerializeField] private int pushRingOutScore = 100;
     [SerializeField] private int tiltRingOutScore = 25;
     [SerializeField] private float pushRingOutAttributionSeconds = 2.5f;
+    [SerializeField] private float pushRingOutMinimumPlanarSpeed = 5f;
 
     [Header("Templates")]
     [SerializeField] private GameObject stageTemplate;
@@ -61,7 +76,8 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     [SerializeField] private GameObject enemyTemplate;
     [SerializeField] private GameObject healthPickupTemplate;
 
-    [Header("Graphic UI")]
+    [Header("Graphic UI - Ingame")]
+    [SerializeField] private GameObject[] ingameUIObject; // It should be concealed if game over
     [SerializeField] private bool useGraphicUI;
     [SerializeField] private Image pushCooldownFillImage;
     [SerializeField] private Image healthFillImage;
@@ -71,7 +87,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     [SerializeField] private TextMeshProUGUI totalScoreText;
     [SerializeField] private TextMeshProUGUI survivalTimeText;
     //[SerializeField] private TextMeshProUGUI gameOverSurvivalTimeText;
-    [Header("Graphic UI")]
+    [Header("Graphic UI - Outgame")]
     [SerializeField] private UpgradeUI upgradeUI;
     [SerializeField] private GameOverUI gameOverUI;
     [SerializeField] private string mainMenuSceneName;
@@ -98,11 +114,16 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     private float invulnerableTimer;
     private float pushCooldownTimer;
     private float enemySpawnTimer;
+    private float enemySpawnPauseTimer;
     private float survivalTime;
     private float finalSurvivalTime;
     private float pickupSpawnTimer;
     private float luck;
     private float survivalScoreTimer;
+    private float cameraShakeTimer;
+    private float cameraShakeSeed;
+    private float pushCameraFovTimer;
+    private float pushCameraFovTotalDuration;
     private int totalScore;
     private int upgradePoints;
     private int level = 1;
@@ -123,6 +144,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         BuildInputActions();
         BuildScene();
         EnsureTotalScoreText();
+        SetIngameUIVisible(true);
     }
 
     private void OnEnable()
@@ -141,6 +163,21 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         pushAction?.Dispose();
         boostAction?.Dispose();
         restartAction?.Dispose();
+    }
+
+    private void OnValidate()
+    {
+        if (!Application.isPlaying)
+        {
+            return;
+        }
+
+        SetActionEnabled(pushAction, enabled && enablePushAbility);
+        if (!enablePushAbility)
+        {
+            pushCooldownTimer = 0f;
+            pushCameraFovTimer = 0f;
+        }
     }
 
     private void Update()
@@ -209,7 +246,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     private void SetInputEnabled(bool enabled)
     {
         SetActionEnabled(tiltAction, enabled);
-        SetActionEnabled(pushAction, enabled);
+        SetActionEnabled(pushAction, enabled && enablePushAbility);
         SetActionEnabled(boostAction, enabled);
         SetActionEnabled(restartAction, enabled);
     }
@@ -239,8 +276,11 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         }
 
         Vector3 wantedPosition = playerBody.position + new Vector3(0f, 13f, -11f);
-        mainCamera.transform.position = Vector3.Lerp(mainCamera.transform.position, wantedPosition, Time.unscaledDeltaTime * 7f);
+        Vector3 cameraPosition = Vector3.Lerp(mainCamera.transform.position, wantedPosition, Time.unscaledDeltaTime * 7f);
+        cameraPosition += GetCameraShakeOffset();
+        mainCamera.transform.position = cameraPosition;
         mainCamera.transform.rotation = Quaternion.Euler(52f, 0f, 0f);
+        mainCamera.fieldOfView = GetCameraFieldOfView();
 
         UpdateGameplayUI();
     }
@@ -295,7 +335,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         GUI.Label(new Rect(26, 24, width - 28, 22), $"Health {Mathf.CeilToInt(health)} / {Mathf.CeilToInt(maxHealth)}");
         GUI.HorizontalScrollbar(new Rect(26, 48, width - 44, 18), 0f, health, 0f, maxHealth);
         GUI.Label(new Rect(26, 70, width - 28, 22), $"Score {totalScore}    Level {level}    Points {upgradePoints}/{nextUpgradeScore}");
-        string pushText = pushCooldownTimer <= 0f ? "Push Ready" : $"Push {pushCooldownTimer:0.0}s";
+        string pushText = !enablePushAbility ? "Push Disabled" : pushCooldownTimer <= 0f ? "Push Ready" : $"Push {pushCooldownTimer:0.0}s";
         GUI.Label(new Rect(26, 94, width - 28, 22), $"{pushText}    Luck +{luck:0%}");
         GUI.Label(new Rect(26, 118, width - 28, 22), $"Time {FormatSurvivalTime(gameOver ? finalSurvivalTime : survivalTime)}");
     }
@@ -307,6 +347,11 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
     private float GetPushCooldownPercent()
     {
+        if (!enablePushAbility)
+        {
+            return 0f;
+        }
+
         if (pushCooldownSeconds <= 0f)
         {
             return 1f;
@@ -333,6 +378,94 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         {
             text.text = value;
         }
+    }
+
+    private void SetIngameUIVisible(bool visible)
+    {
+        if (ingameUIObject == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < ingameUIObject.Length; i++)
+        {
+            if (ingameUIObject[i] != null)
+            {
+                ingameUIObject[i].SetActive(visible);
+            }
+        }
+    }
+
+    private Vector3 GetCameraShakeOffset()
+    {
+        if (cameraShakeTimer <= 0f || damageCameraShakeDuration <= 0f || damageCameraShakeMagnitude <= 0f)
+        {
+            cameraShakeTimer = 0f;
+            return Vector3.zero;
+        }
+
+        float elapsed = damageCameraShakeDuration - cameraShakeTimer;
+        float shakeProgress = Mathf.Clamp01(cameraShakeTimer / damageCameraShakeDuration);
+        float strength = damageCameraShakeMagnitude * shakeProgress * shakeProgress;
+        float frequency = Mathf.Max(0.01f, damageCameraShakeFrequency);
+        float sampleTime = elapsed * frequency;
+        float x = Mathf.PerlinNoise(cameraShakeSeed, sampleTime) * 2f - 1f;
+        float y = Mathf.PerlinNoise(cameraShakeSeed + 47.31f, sampleTime) * 2f - 1f;
+
+        cameraShakeTimer = Mathf.Max(0f, cameraShakeTimer - Time.unscaledDeltaTime);
+
+        return (mainCamera.transform.right * x + mainCamera.transform.up * y) * strength;
+    }
+
+    private void StartDamageCameraShake()
+    {
+        cameraShakeTimer = Mathf.Max(cameraShakeTimer, damageCameraShakeDuration);
+        cameraShakeSeed = UnityEngine.Random.value * 1000f;
+    }
+
+    private float GetCameraFieldOfView()
+    {
+        return cameraFieldOfView + GetPushCameraFovOffset();
+    }
+
+    private float GetPushCameraFovOffset()
+    {
+        if (pushCameraFovTimer <= 0f || pushCameraFovIncrease <= 0f || pushCameraFovTotalDuration <= 0f)
+        {
+            pushCameraFovTimer = 0f;
+            return 0f;
+        }
+
+        float elapsed = pushCameraFovTotalDuration - pushCameraFovTimer;
+        float expandDuration = Mathf.Max(0.0001f, pushCameraFovExpandDuration);
+        float recoverDuration = Mathf.Max(0.0001f, pushCameraFovRecoverDuration);
+        float offset;
+
+        if (elapsed <= expandDuration)
+        {
+            float t = Mathf.Clamp01(elapsed / expandDuration);
+            offset = pushCameraFovIncrease * EaseOutCubic(t);
+        }
+        else
+        {
+            float t = Mathf.Clamp01((elapsed - expandDuration) / recoverDuration);
+            offset = pushCameraFovIncrease * (1f - EaseOutCubic(t));
+        }
+
+        pushCameraFovTimer = Mathf.Max(0f, pushCameraFovTimer - Time.unscaledDeltaTime);
+        return offset;
+    }
+
+    private void StartPushCameraFovPulse()
+    {
+        pushCameraFovTotalDuration = Mathf.Max(0f, pushCameraFovExpandDuration) + Mathf.Max(0f, pushCameraFovRecoverDuration);
+        pushCameraFovTimer = pushCameraFovTotalDuration;
+    }
+
+    private static float EaseOutCubic(float t)
+    {
+        float inverse = 1f - Mathf.Clamp01(t);
+        return 1f - inverse * inverse * inverse;
     }
 
     private void EnsureTotalScoreText()
@@ -412,7 +545,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
         mainCamera.nearClipPlane = 0.1f;
         mainCamera.farClipPlane = 120f;
-        mainCamera.fieldOfView = 55f;
+        mainCamera.fieldOfView = cameraFieldOfView;
 
         stageRoot = InstantiateRequired(stageTemplate, Vector3.zero, Quaternion.identity, transform).transform;
         stageRoot.name = "Tilting Stage Root";
@@ -512,7 +645,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
     private void SpawnEnemy()
     {
-        if (enemies.Count >= maxEnemies)
+        if (enemies.Count >= GetCurrentMaxEnemies())
         {
             return;
         }
@@ -646,8 +779,14 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
     private void UpdatePlayerActions()
     {
-        pushCooldownTimer = Mathf.Max(0f, pushCooldownTimer - Time.deltaTime);
         invulnerableTimer = Mathf.Max(0f, invulnerableTimer - Time.deltaTime);
+        if (!enablePushAbility)
+        {
+            pushCooldownTimer = 0f;
+            return;
+        }
+
+        pushCooldownTimer = Mathf.Max(0f, pushCooldownTimer - Time.deltaTime);
 
         bool pushPressed = pushAction.WasPressedThisFrame();
         if (pushPressed && pushCooldownTimer <= 0f)
@@ -658,7 +797,13 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
     private void UsePush()
     {
+        if (!enablePushAbility)
+        {
+            return;
+        }
+
         pushCooldownTimer = pushCooldownSeconds;
+        StartPushCameraFovPulse();
         Vector3 playerPosition = playerBody.position;
         for (int i = enemies.Count - 1; i >= 0; i--)
         {
@@ -678,8 +823,14 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
             Vector3 direction = offset.normalized;
             direction.y = 0.35f;
-            enemy.MarkPushedForRingOutScore(pushRingOutAttributionSeconds);
-            enemy.Body.AddForce(direction.normalized * pushImpulse * (1f - distance / pushRadius), ForceMode.Impulse);
+            float forceFactor = 1f - distance / pushRadius;
+            if (forceFactor <= 0f)
+            {
+                continue;
+            }
+
+            enemy.MarkAffectedByPushForceField(pushRingOutAttributionSeconds);
+            enemy.Body.AddForce(direction.normalized * pushImpulse * forceFactor, ForceMode.Impulse);
         }
     }
 
@@ -693,14 +844,23 @@ public sealed class RockinRackinPrototype : MonoBehaviour
             return;
         }
 
-        enemySpawnTimer += Time.deltaTime;
         survivalTime += Time.deltaTime;
         UpdateSurvivalScore();
-        GetEnemySpawnSettings(out float currentEnemySpawnInterval, out int currentEnemySpawnBatchSize);
-        if (enemySpawnTimer >= currentEnemySpawnInterval)
+
+        if (enemySpawnPauseTimer > 0f)
         {
-            enemySpawnTimer -= currentEnemySpawnInterval;
-            SpawnEnemyBatch(currentEnemySpawnBatchSize);
+            enemySpawnPauseTimer = Mathf.Max(0f, enemySpawnPauseTimer - Time.deltaTime);
+            enemySpawnTimer = 0f;
+        }
+        else
+        {
+            enemySpawnTimer += Time.deltaTime;
+            GetEnemySpawnSettings(out float currentEnemySpawnInterval, out int currentEnemySpawnBatchSize);
+            if (enemySpawnTimer >= currentEnemySpawnInterval)
+            {
+                enemySpawnTimer -= currentEnemySpawnInterval;
+                SpawnEnemyBatch(currentEnemySpawnBatchSize);
+            }
         }
 
         pickupSpawnTimer += Time.deltaTime;
@@ -739,6 +899,12 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         totalScore = Mathf.Max(0, totalScore + amount);
     }
 
+    private void PauseEnemySpawns(float seconds)
+    {
+        enemySpawnPauseTimer = Mathf.Max(enemySpawnPauseTimer, seconds);
+        enemySpawnTimer = 0f;
+    }
+
     private void GetEnemySpawnSettings(out float currentInterval, out int currentBatchSize)
     {
         int baseBatchSize = Mathf.Max(1, enemySpawnBatchSize);
@@ -757,11 +923,29 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
     private void SpawnEnemyBatch(int batchSize)
     {
-        int spawnCount = Mathf.Min(Mathf.Max(1, batchSize), maxEnemies - enemies.Count);
+        int spawnCount = Mathf.Min(Mathf.Max(1, batchSize), GetCurrentMaxEnemies() - enemies.Count);
         for (int i = 0; i < spawnCount; i++)
         {
             SpawnEnemy();
         }
+    }
+
+    private int GetCurrentMaxEnemies()
+    {
+        int baseMaxEnemies = Mathf.Max(0, maxEnemies);
+        if (maxEnemiesIncreaseIntervalSeconds <= 0f || maxEnemiesIncreasePerStep <= 0)
+        {
+            return baseMaxEnemies;
+        }
+
+        int stepCount = Mathf.FloorToInt(survivalTime / maxEnemiesIncreaseIntervalSeconds);
+        int currentMaxEnemies = baseMaxEnemies + stepCount * maxEnemiesIncreasePerStep;
+        if (maxEnemiesAbsoluteLimit > 0)
+        {
+            currentMaxEnemies = Mathf.Min(currentMaxEnemies, Mathf.Max(baseMaxEnemies, maxEnemiesAbsoluteLimit));
+        }
+
+        return currentMaxEnemies;
     }
 
     private void CheckOutOfBounds()
@@ -783,7 +967,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
             if (IsOutsideField(enemy.transform.position))
             {
-                AddScore(enemy.IsPushRingOutScoreActive ? pushRingOutScore : tiltRingOutScore);
+                AddScore(enemy.HasConfirmedPushRingOut(pushRingOutMinimumPlanarSpeed) ? pushRingOutScore : tiltRingOutScore);
                 DestroyEnemy(enemy, true);
             }
         }
@@ -815,8 +999,14 @@ public sealed class RockinRackinPrototype : MonoBehaviour
             return;
         }
 
+        if (amount <= 0f)
+        {
+            return;
+        }
+
         health = Mathf.Max(0f, health - amount);
         invulnerableTimer = invulnerableSeconds;
+        StartDamageCameraShake();
         if (health <= 0f)
         {
             EndGame();
@@ -832,6 +1022,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
         finalSurvivalTime = survivalTime;
         gameOver = true;
+        SetIngameUIVisible(false);
         gameOverUI?.Show(FormatSurvivalTime(finalSurvivalTime), totalScore, RestartPrototype, ReturnToMainMenu);
         Time.timeScale = 0f;
         UpdateGameplayUI();
@@ -967,9 +1158,16 @@ public sealed class RockinRackinPrototype : MonoBehaviour
             UpgradeKind.ItemDensity,
             UpgradeKind.MaxHealth,
             UpgradeKind.BoostTilt,
-            UpgradeKind.PushCooldown,
+            UpgradeKind.SpawnPause,
             UpgradeKind.Luck
         };
+
+        if (enablePushAbility)
+        {
+            pool.Add(UpgradeKind.PushCooldown);
+            pool.Add(UpgradeKind.PushPower);
+            pool.Add(UpgradeKind.PushRange);
+        }
 
         for (int i = 0; i < 3 && pool.Count > 0; i++)
         {
@@ -1008,6 +1206,18 @@ public sealed class RockinRackinPrototype : MonoBehaviour
             UpgradeKind.PushCooldown => new UpgradeOption("Push Cooldown " + grade, "Reduce the push ability cooldown.", () =>
             {
                 pushCooldownSeconds = Mathf.Max(1.2f, pushCooldownSeconds - 0.7f * multiplier);
+            }),
+            UpgradeKind.PushPower => new UpgradeOption("Push Power " + grade, "Increase the impulse applied by the push ability.", () =>
+            {
+                pushImpulse += 3.5f * multiplier;
+            }),
+            UpgradeKind.PushRange => new UpgradeOption("Push Range " + grade, "Increase the radius of the push force field.", () =>
+            {
+                pushRadius += 0.85f * multiplier;
+            }),
+            UpgradeKind.SpawnPause => new UpgradeOption("Catch Breath " + grade, $"Skip a permanent upgrade and stop enemy spawns for {enemySpawnPauseUpgradeSeconds * multiplier:0.#} seconds.", () =>
+            {
+                PauseEnemySpawns(enemySpawnPauseUpgradeSeconds * multiplier);
             }),
             _ => new UpgradeOption("Luck " + grade, "Improve item drops, rare upgrade odds, and landing critical chance.", () =>
             {
@@ -1104,6 +1314,9 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         MaxHealth,
         BoostTilt,
         PushCooldown,
+        PushPower,
+        PushRange,
+        SpawnPause,
         Luck
     }
 }
