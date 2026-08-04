@@ -1022,6 +1022,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
         finalSurvivalTime = survivalTime;
         gameOver = true;
+        RankManager.SaveRecord(totalScore, finalSurvivalTime);
         SetIngameUIVisible(false);
         gameOverUI?.Show(FormatSurvivalTime(finalSurvivalTime), totalScore, RestartPrototype, ReturnToMainMenu);
         Time.timeScale = 0f;
