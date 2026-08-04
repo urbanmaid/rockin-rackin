@@ -76,6 +76,9 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     [SerializeField] private GameObject enemyTemplate;
     [SerializeField] private GameObject healthPickupTemplate;
 
+    [Header("Runtime Flow")]
+    [SerializeField] private bool waitForStartUI = true;
+
     [Header("Graphic UI - Ingame")]
     [SerializeField] private GameObject[] ingameUIObject; // It should be concealed if game over
     [SerializeField] private bool useGraphicUI;
@@ -128,23 +131,39 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     private int upgradePoints;
     private int level = 1;
     private int nextUpgradeScore = 6;
+    private bool gameplayStarted;
     private bool upgradeOpen;
     private bool gameOver;
 
     public Rigidbody PlayerBody => playerBody;
     public float EnemyHomingForce => enemyHomingForce * Mathf.Pow(Mathf.Max(0.01f, enemyHomingForceMultiplierPerMinute), survivalTime / 60f);
     public float ContactDamage => contactDamage;
+    public bool HasGameplayStarted => gameplayStarted;
+
+    public void BeginGame()
+    {
+        if (gameOver || gameplayStarted)
+        {
+            return;
+        }
+
+        gameplayStarted = true;
+        Time.timeScale = 1f;
+        SetIngameUIVisible(true);
+        SetInputEnabled(true);
+    }
 
     private void Awake()
     {
         Physics.gravity = new Vector3(0f, -16f, 0f);
-        Time.timeScale = 1f;
+        gameplayStarted = !waitForStartUI;
+        Time.timeScale = gameplayStarted ? 1f : 0f;
         health = maxHealth;
         smoothedTiltDegrees = baseTiltDegrees;
         BuildInputActions();
         BuildScene();
         EnsureTotalScoreText();
-        SetIngameUIVisible(true);
+        SetIngameUIVisible(gameplayStarted);
     }
 
     private void OnEnable()
@@ -182,6 +201,11 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
     private void Update()
     {
+        if (!gameplayStarted)
+        {
+            return;
+        }
+
         if (gameOver)
         {
             if (restartAction.WasPressedThisFrame())
@@ -205,7 +229,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (gameOver || upgradeOpen || stageRoot == null)
+        if (!gameplayStarted || gameOver || upgradeOpen || stageRoot == null)
         {
             return;
         }
