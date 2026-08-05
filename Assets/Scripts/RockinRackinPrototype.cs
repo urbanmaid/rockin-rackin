@@ -28,6 +28,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     [SerializeField] private float pushCooldownSeconds = 5f;
 
     [Header("Camera")]
+    [SerializeField] private bool FixCameraToPlayer = true;
     [SerializeField] private float cameraFieldOfView = 55f;
     [SerializeField] private float damageCameraShakeDuration = 0.22f;
     [SerializeField] private float damageCameraShakeMagnitude = 0.42f;
@@ -297,12 +298,12 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (playerBody == null || mainCamera == null)
+        if (mainCamera == null || !TryGetCameraFocusPosition(out Vector3 focusPosition))
         {
             return;
         }
 
-        Vector3 wantedPosition = playerBody.position + new Vector3(0f, 13f, -11f);
+        Vector3 wantedPosition = focusPosition + new Vector3(0f, 13f, -11f);
         Vector3 cameraPosition = Vector3.Lerp(mainCamera.transform.position, wantedPosition, Time.unscaledDeltaTime * 7f);
         cameraPosition += GetCameraShakeOffset();
         mainCamera.transform.position = cameraPosition;
@@ -310,6 +311,30 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         mainCamera.fieldOfView = GetCameraFieldOfView();
 
         UpdateGameplayUI();
+    }
+
+    private bool TryGetCameraFocusPosition(out Vector3 focusPosition)
+    {
+        if (FixCameraToPlayer)
+        {
+            if (playerBody == null)
+            {
+                focusPosition = Vector3.zero;
+                return false;
+            }
+
+            focusPosition = playerBody.position;
+            return true;
+        }
+
+        if (stageRoot == null)
+        {
+            focusPosition = Vector3.zero;
+            return false;
+        }
+
+        focusPosition = stageRoot.position;
+        return true;
     }
 
     private void OnGUI()
@@ -1164,9 +1189,13 @@ public sealed class RockinRackinPrototype : MonoBehaviour
             UpgradeKind.ItemDensity,
             UpgradeKind.MaxHealth,
             UpgradeKind.BoostTilt,
-            UpgradeKind.SpawnPause,
             UpgradeKind.Luck
         };
+
+        if (health <= 20f)
+        {
+            pool.Add(UpgradeKind.SpawnPause);
+        }
 
         if (enablePushAbility)
         {
@@ -1221,11 +1250,11 @@ public sealed class RockinRackinPrototype : MonoBehaviour
             {
                 pushRadius += 0.85f * multiplier;
             }),
-            UpgradeKind.SpawnPause => new UpgradeOption("Catch Breath " + grade, $"Skip a permanent upgrade and stop enemy spawns for {enemySpawnPauseUpgradeSeconds * multiplier:0.#} seconds.", () =>
+            UpgradeKind.SpawnPause => new UpgradeOption("Catch Breath " + grade, $"Pause enemy spawns for {enemySpawnPauseUpgradeSeconds * multiplier:0.#}s.", () =>
             {
                 PauseEnemySpawns(enemySpawnPauseUpgradeSeconds * multiplier);
             }),
-            _ => new UpgradeOption("Luck " + grade, "Improve item drops, rare upgrade odds, and landing critical chance.", () =>
+            _ => new UpgradeOption("Luck " + grade, "Boost drops, rares, and crits.", () =>
             {
                 luck += 0.18f * multiplier;
             })
