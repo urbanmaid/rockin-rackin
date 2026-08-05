@@ -7,6 +7,9 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 {
     [Header("Stage")]
     [SerializeField] private float fieldSize = 26f;
+    [SerializeField] private bool useCircularStage;
+    [SerializeField] private Vector2 circularStageCenter = Vector2.zero;
+    [SerializeField] private float circularStageRadius = 13f;
     [SerializeField] private float baseTiltDegrees = 12f;
     [SerializeField] private float boostTiltDegrees = 23f;
     [SerializeField] private float tiltSmoothing = 7.5f;
@@ -32,6 +35,9 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     [SerializeField] private float pushCameraFovIncrease = 6f;
     [SerializeField] private float pushCameraFovExpandDuration = 0.16f;
     [SerializeField] private float pushCameraFovRecoverDuration = 0.34f;
+
+    [Header("Visual Effects")]
+    [SerializeField] private TemporaryMaterialColorChanger boostMaterialColorChanger;
 
     [Header("Enemies")]
     [SerializeField] private int startingEnemies = 10;
@@ -129,6 +135,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     private bool gameplayStarted;
     private bool upgradeOpen;
     private bool gameOver;
+    private bool boostMaterialColorActive;
 
     public Rigidbody PlayerBody => playerBody;
     public float EnemyHomingForce => enemyHomingForce * Mathf.Pow(Mathf.Max(0.01f, enemyHomingForceMultiplierPerMinute), survivalTime / 60f);
@@ -167,6 +174,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
     private void OnDisable()
     {
+        SetBoostMaterialColorActive(false);
         SetInputEnabled(false);
     }
 
@@ -225,6 +233,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     {
         if (!gameplayStarted || gameOver || upgradeOpen || stageRoot == null)
         {
+            SetBoostMaterialColorActive(false);
             return;
         }
 
@@ -434,6 +443,17 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         pushCameraFovTimer = pushCameraFovTotalDuration;
     }
 
+    private void SetBoostMaterialColorActive(bool active)
+    {
+        if (boostMaterialColorActive == active)
+        {
+            return;
+        }
+
+        boostMaterialColorActive = active;
+        boostMaterialColorChanger?.SetChanged(active);
+    }
+
     private static float EaseOutCubic(float t)
     {
         float inverse = 1f - Mathf.Clamp01(t);
@@ -559,12 +579,12 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         }
 
         Vector3 position = RandomPointOnStage(4f);
-        if (Vector3.Distance(position, playerBody.position) < 4f)
+        if (IsTooCloseToPlayer(position, 4f))
         {
-            position += position.normalized * 4f;
+            position = MoveLocalPointAwayFromPlayer(position, 4f);
         }
 
-        GameObject enemy = InstantiateRequired(enemyTemplate, position + Vector3.up * 1.1f + stageRoot.transform.position, Quaternion.identity, transform);
+        GameObject enemy = InstantiateRequired(enemyTemplate, stageRoot.TransformPoint(position) + stageRoot.up * 1.1f, Quaternion.identity, transform);
         enemy.name = "Enemy Sphere";
         enemy.transform.localScale = Vector3.one * 0.95f;
 
@@ -612,8 +632,50 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
     private Vector3 RandomPointOnStage(float margin)
     {
-        float extent = fieldSize * 0.5f - margin;
+        if (useCircularStage)
+        {
+            float radius = Mathf.Max(0f, circularStageRadius - margin);
+            Vector2 point = circularStageCenter + UnityEngine.Random.insideUnitCircle * radius;
+            return new Vector3(point.x, 0f, point.y);
+        }
+
+        float extent = Mathf.Max(0f, fieldSize * 0.5f - margin);
         return new Vector3(UnityEngine.Random.Range(-extent, extent), 0f, UnityEngine.Random.Range(-extent, extent));
+    }
+
+    private bool IsTooCloseToPlayer(Vector3 stageLocalPosition, float minimumDistance)
+    {
+        if (playerBody == null || stageRoot == null)
+        {
+            return false;
+        }
+
+        Vector3 playerLocalPosition = stageRoot.InverseTransformPoint(playerBody.position);
+        stageLocalPosition.y = 0f;
+        playerLocalPosition.y = 0f;
+        return Vector3.Distance(stageLocalPosition, playerLocalPosition) < minimumDistance;
+    }
+
+    private Vector3 MoveLocalPointAwayFromPlayer(Vector3 stageLocalPosition, float distance)
+    {
+        Vector3 playerLocalPosition = stageRoot.InverseTransformPoint(playerBody.position);
+        Vector2 direction = new Vector2(stageLocalPosition.x - playerLocalPosition.x, stageLocalPosition.z - playerLocalPosition.z);
+        if (direction.sqrMagnitude <= 0.0001f)
+        {
+            direction = UnityEngine.Random.insideUnitCircle.normalized;
+            if (direction.sqrMagnitude <= 0.0001f)
+            {
+                direction = Vector2.right;
+            }
+        }
+
+        direction.Normalize();
+        Vector3 movedPosition = new Vector3(
+            playerLocalPosition.x + direction.x * distance,
+            stageLocalPosition.y,
+            playerLocalPosition.z + direction.y * distance);
+
+        return ClampLocalPointToStage(movedPosition, 1f);
     }
 
     private void ReadTiltInput()
@@ -624,6 +686,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     private void UpdateTilt()
     {
         bool boost = boostAction.IsPressed();
+        SetBoostMaterialColorActive(boost);
         float targetTiltDegrees = boost ? boostTiltDegrees : baseTiltDegrees;
         float smoothingFactor = 1f - Mathf.Exp(-tiltSmoothing * Time.fixedDeltaTime);
         previousSmoothedTilt = smoothedTilt;
@@ -890,6 +953,14 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     private bool IsOutsideField(Vector3 position)
     {
         float limit = fieldSize * 0.5f + 1.7f;
+        if (useCircularStage)
+        {
+            Vector3 localPosition = stageRoot.InverseTransformPoint(position);
+            Vector2 offset = new Vector2(localPosition.x - circularStageCenter.x, localPosition.z - circularStageCenter.y);
+            float circularLimit = Mathf.Max(0f, circularStageRadius) + 1.7f;
+            return offset.sqrMagnitude > circularLimit * circularLimit || position.y < stageRoot.transform.position.y - circularLimit;
+        }
+
         return Mathf.Abs(position.x) > limit || Mathf.Abs(position.z) > limit || position.y < stageRoot.transform.position.y - limit;
     }
 
@@ -983,11 +1054,31 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         }
 
         Vector3 localPosition = healthItemRoot.InverseTransformPoint(position);
-        CreatePickup("Dropped Health Pickup", new Vector3(
-            Mathf.Clamp(localPosition.x, -fieldSize * 0.45f, fieldSize * 0.45f),
-            0.45f,
-            Mathf.Clamp(localPosition.z, -fieldSize * 0.45f, fieldSize * 0.45f)),
-            Vector3.one * 0.62f);
+        Vector3 pickupPosition = ClampLocalPointToStage(localPosition, fieldSize * 0.05f);
+        pickupPosition.y = 0.45f;
+        CreatePickup("Dropped Health Pickup", pickupPosition, Vector3.one * 0.62f);
+    }
+
+    private Vector3 ClampLocalPointToStage(Vector3 localPosition, float margin)
+    {
+        if (useCircularStage)
+        {
+            float radius = Mathf.Max(0f, circularStageRadius - margin);
+            Vector2 center = circularStageCenter;
+            Vector2 offset = new Vector2(localPosition.x - center.x, localPosition.z - center.y);
+            if (offset.sqrMagnitude > radius * radius)
+            {
+                offset = offset.sqrMagnitude > 0.0001f ? offset.normalized * radius : Vector2.zero;
+            }
+
+            return new Vector3(center.x + offset.x, localPosition.y, center.y + offset.y);
+        }
+
+        float extent = Mathf.Max(0f, fieldSize * 0.5f - margin);
+        return new Vector3(
+            Mathf.Clamp(localPosition.x, -extent, extent),
+            localPosition.y,
+            Mathf.Clamp(localPosition.z, -extent, extent));
     }
 
     private void CreatePickup(string pickupName, Vector3 localPosition, Vector3 scale)

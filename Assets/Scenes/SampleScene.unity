@@ -1532,6 +1532,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   fieldSize: 30
+  useCircularStage: 1
+  circularStageCenter: {x: 0, y: 0}
+  circularStageRadius: 16
   baseTiltDegrees: 17.5
   boostTiltDegrees: 23
   tiltSmoothing: 9
@@ -1553,6 +1556,7 @@ MonoBehaviour:
   pushCameraFovIncrease: 6
   pushCameraFovExpandDuration: 0.16
   pushCameraFovRecoverDuration: 0.34
+  boostMaterialColorChanger: {fileID: 1783457215}
   startingEnemies: 2
   maxEnemies: 10
   enemySpawnInterval: 9
@@ -1676,6 +1680,53 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1727957850}
   m_CullTransparentMesh: 1
+--- !u!1 &1783457213
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1783457214}
+  - component: {fileID: 1783457215}
+  m_Layer: 0
+  m_Name: MaterialChanger_Boost
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1783457214
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1783457213}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1783457215
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1783457213}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0589afc776a14dd5b0b6c32d9712eae1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TemporaryMaterialColorChanger
+  targetMaterial: {fileID: 2100000, guid: c02b650003424ca79d9979d2b15fc2b5, type: 2}
+  originalColor: {r: 0.36862746, g: 0.32941177, b: 0.24313726, a: 1}
+  changedColor: {r: 1, g: 0.78498185, b: 0, a: 1}
 --- !u!1 &1794953472
 GameObject:
   m_ObjectHideFlags: 0
@@ -2982,3 +3033,4 @@ SceneRoots:
   - {fileID: 894850532}
   - {fileID: 352327068}
   - {fileID: 1396218701}
+  - {fileID: 1783457214}
