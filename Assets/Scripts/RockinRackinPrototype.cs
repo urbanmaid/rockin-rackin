@@ -89,6 +89,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     [SerializeField] private TextMeshProUGUI scoreProgressText;
     [SerializeField] private TextMeshProUGUI totalScoreText;
     [SerializeField] private TextMeshProUGUI survivalTimeText;
+    [SerializeField] private AuxScore auxScore;
     //[SerializeField] private TextMeshProUGUI gameOverSurvivalTimeText;
     [Header("Graphic UI - Outgame")]
     [SerializeField] private UpgradeUI upgradeUI;
@@ -923,6 +924,12 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         totalScore = Mathf.Max(0, totalScore + amount);
     }
 
+    private void AddEnemyScore(int amount)
+    {
+        AddScore(amount);
+        auxScore?.ShowScore(amount);
+    }
+
     private void PauseEnemySpawns(float seconds)
     {
         enemySpawnPauseTimer = Mathf.Max(enemySpawnPauseTimer, seconds);
@@ -991,7 +998,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
             if (IsOutsideField(enemy.transform.position))
             {
-                AddScore(enemy.HasConfirmedPushRingOut(pushRingOutMinimumPlanarSpeed) ? pushRingOutScore : tiltRingOutScore);
+                AddEnemyScore(enemy.HasConfirmedPushRingOut(pushRingOutMinimumPlanarSpeed) ? pushRingOutScore : tiltRingOutScore);
                 DestroyEnemy(enemy, true);
             }
         }

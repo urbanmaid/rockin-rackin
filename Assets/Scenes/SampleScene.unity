@@ -578,6 +578,7 @@ GameObject:
   - component: {fileID: 461014138}
   - component: {fileID: 461014137}
   - component: {fileID: 461014136}
+  - component: {fileID: 461014140}
   m_Layer: 5
   m_Name: RankUI
   m_TagString: Untagged
@@ -659,6 +660,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RankUI
   rankUIElement: {fileID: 9087861919668829283, guid: e1234c8f122a9b44495a0c396e499bfe, type: 3}
   rankUICount: 6
+--- !u!222 &461014140
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 461014134}
+  m_CullTransparentMesh: 1
 --- !u!1 &483296192
 GameObject:
   m_ObjectHideFlags: 0
@@ -1587,6 +1596,7 @@ MonoBehaviour:
   scoreProgressText: {fileID: 38086000499515164}
   totalScoreText: {fileID: 5316290460289391021}
   survivalTimeText: {fileID: 2607205807832208981}
+  auxScore: {fileID: 5316290460289391022}
   upgradeUI: {fileID: 7943923925636077160}
   gameOverUI: {fileID: 1864266611}
   mainMenuSceneName: SampleScene
@@ -2737,6 +2747,26 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8955053728232795219, guid: aa8a3e68d5d7293479ab1795db55654c, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8955053728232795219, guid: aa8a3e68d5d7293479ab1795db55654c, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8955053728232795219, guid: aa8a3e68d5d7293479ab1795db55654c, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8955053728232795219, guid: aa8a3e68d5d7293479ab1795db55654c, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8955053728232795219, guid: aa8a3e68d5d7293479ab1795db55654c, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2753,6 +2783,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
+--- !u!114 &5316290460289391022 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 9089846512268961292, guid: aa8a3e68d5d7293479ab1795db55654c, type: 3}
+  m_PrefabInstance: {fileID: 5316290460289391020}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1f9c9a1c2a3849e4a8fb8d9b1d0e5b78, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AuxScore
 --- !u!1 &5379972111109055459
 GameObject:
   m_ObjectHideFlags: 0
