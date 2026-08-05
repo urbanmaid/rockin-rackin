@@ -1589,13 +1589,9 @@ MonoBehaviour:
   - {fileID: 654023772}
   - {fileID: 1622754762}
   useGraphicUI: 1
-  pushCooldownFillImage: {fileID: 38086000499515168}
-  healthFillImage: {fileID: 38086000499515167}
-  healthLevelText: {fileID: 38086000499515166}
-  levelText: {fileID: 38086000499515165}
-  scoreProgressText: {fileID: 38086000499515164}
-  totalScoreText: {fileID: 5316290460289391021}
-  survivalTimeText: {fileID: 2607205807832208981}
+  healthUI: {fileID: 38086000499515169}
+  levelCounterUI: {fileID: 38086000499515170}
+  timeScoreUI: {fileID: 5316290460289391023}
   auxScore: {fileID: 5316290460289391022}
   upgradeUI: {fileID: 7943923925636077160}
   gameOverUI: {fileID: 1864266611}
@@ -2355,6 +2351,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+--- !u!114 &38086000499515169 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6595298142241764620, guid: 2c9df8932abcb574b91bfc910ca2c082, type: 3}
+  m_PrefabInstance: {fileID: 38086000499515163}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60f9c8f092574afeb2bd885f73629c57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HealthUI
+--- !u!114 &38086000499515170 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 6595298142241764621, guid: 2c9df8932abcb574b91bfc910ca2c082, type: 3}
+  m_PrefabInstance: {fileID: 38086000499515163}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c423781d5784dce907f727eeebc5d2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LevelCounterUI
 --- !u!114 &1456775014875031120
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2794,6 +2812,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1f9c9a1c2a3849e4a8fb8d9b1d0e5b78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AuxScore
+--- !u!114 &5316290460289391023 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5621454039390255604, guid: aa8a3e68d5d7293479ab1795db55654c, type: 3}
+  m_PrefabInstance: {fileID: 5316290460289391020}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a87318ad4434e339d23e7bd44b81f60, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TimeScoreUI
 --- !u!1 &5379972111109055459
 GameObject:
   m_ObjectHideFlags: 0

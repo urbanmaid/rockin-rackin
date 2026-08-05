@@ -12,6 +12,8 @@ GameObject:
   - component: {fileID: 2382563571930566427}
   - component: {fileID: 6059140205317039256}
   - component: {fileID: 6595298142241764619}
+  - component: {fileID: 6595298142241764620}
+  - component: {fileID: 6595298142241764621}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -105,6 +107,35 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &6595298142241764620
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 367383937644671160}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60f9c8f092574afeb2bd885f73629c57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HealthUI
+  healthFillImage: {fileID: 3396921998008667320}
+  pushCooldownFillImage: {fileID: 1477470148675423336}
+  healthLevelText: {fileID: 3169771246733603945}
+--- !u!114 &6595298142241764621
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 367383937644671160}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c423781d5784dce907f727eeebc5d2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LevelCounterUI
+  levelText: {fileID: 7819812696618306308}
+  levelProgressText: {fileID: 2896509139765009071}
 --- !u!1 &829432126091179205
 GameObject:
   m_ObjectHideFlags: 0

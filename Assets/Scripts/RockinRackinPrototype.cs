@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine.InputSystem;
 using UnityEngine;
-using UnityEngine.UI;
 
 public sealed class RockinRackinPrototype : MonoBehaviour
 {
@@ -82,15 +80,11 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     [Header("Graphic UI - Ingame")]
     [SerializeField] private GameObject[] ingameUIObject; // It should be concealed if game over
     [SerializeField] private bool useGraphicUI;
-    [SerializeField] private Image pushCooldownFillImage;
-    [SerializeField] private Image healthFillImage;
-    [SerializeField] private TextMeshProUGUI healthLevelText;
-    [SerializeField] private TextMeshProUGUI levelText;
-    [SerializeField] private TextMeshProUGUI scoreProgressText;
-    [SerializeField] private TextMeshProUGUI totalScoreText;
-    [SerializeField] private TextMeshProUGUI survivalTimeText;
+    [SerializeField] private HealthUI healthUI;
+    [SerializeField] private LevelCounterUI levelCounterUI;
+    [SerializeField] private TimeScoreUI timeScoreUI;
     [SerializeField] private AuxScore auxScore;
-    //[SerializeField] private TextMeshProUGUI gameOverSurvivalTimeText;
+
     [Header("Graphic UI - Outgame")]
     [SerializeField] private UpgradeUI upgradeUI;
     [SerializeField] private GameOverUI gameOverUI;
@@ -163,7 +157,6 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         smoothedTiltDegrees = baseTiltDegrees;
         BuildInputActions();
         BuildScene();
-        EnsureTotalScoreText();
         SetIngameUIVisible(gameplayStarted);
     }
 
@@ -325,7 +318,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         if (gameOver && gameOverUI == null)
         {
             GUI.Box(new Rect(Screen.width * 0.5f - 170f, Screen.height * 0.5f - 72f, 340f, 144f), "Game Over");
-            GUI.Label(new Rect(Screen.width * 0.5f - 132f, Screen.height * 0.5f - 30f, 264f, 24f), $"Survived {FormatSurvivalTime(finalSurvivalTime)}");
+            GUI.Label(new Rect(Screen.width * 0.5f - 132f, Screen.height * 0.5f - 30f, 264f, 24f), $"Survived {TimeScoreUI.FormatSurvivalTime(finalSurvivalTime)}");
             GUI.Label(new Rect(Screen.width * 0.5f - 132f, Screen.height * 0.5f + 4f, 264f, 24f), "R 키를 눌러 다시 시작");
         }
     }
@@ -342,15 +335,9 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
     private void UpdateGraphicUI()
     {
-        EnsureTotalScoreText();
-        SetRadialFill(healthFillImage, GetHealthPercent());
-        SetRadialFill(pushCooldownFillImage, GetPushCooldownPercent());
-        SetText(healthLevelText, $"{Mathf.CeilToInt(health)}");
-        SetText(levelText, $"Level {level}");
-        SetText(scoreProgressText, $"{upgradePoints} / {nextUpgradeScore}");
-        SetText(totalScoreText, $"{totalScore:N0}");
-        SetText(survivalTimeText, FormatSurvivalTime(survivalTime));
-        //SetText(gameOverSurvivalTimeText, gameOver ? FormatSurvivalTime(finalSurvivalTime) : string.Empty);
+        healthUI?.UpdateHealth(health, maxHealth, enablePushAbility, pushCooldownTimer, pushCooldownSeconds);
+        levelCounterUI?.UpdateLevel(level, upgradePoints, nextUpgradeScore);
+        timeScoreUI?.UpdateTimeScore(survivalTime, totalScore);
     }
 
     private void DrawFallbackStatusUI()
@@ -362,47 +349,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         GUI.Label(new Rect(26, 70, width - 28, 22), $"Score {totalScore}    Level {level}    Points {upgradePoints}/{nextUpgradeScore}");
         string pushText = !enablePushAbility ? "Push Disabled" : pushCooldownTimer <= 0f ? "Push Ready" : $"Push {pushCooldownTimer:0.0}s";
         GUI.Label(new Rect(26, 94, width - 28, 22), $"{pushText}    Luck +{luck:0%}");
-        GUI.Label(new Rect(26, 118, width - 28, 22), $"Time {FormatSurvivalTime(gameOver ? finalSurvivalTime : survivalTime)}");
-    }
-
-    private float GetHealthPercent()
-    {
-        return maxHealth > 0f ? Mathf.Clamp01(health / maxHealth) : 0f;
-    }
-
-    private float GetPushCooldownPercent()
-    {
-        if (!enablePushAbility)
-        {
-            return 0f;
-        }
-
-        if (pushCooldownSeconds <= 0f)
-        {
-            return 1f;
-        }
-
-        return Mathf.Clamp01(1f - pushCooldownTimer / pushCooldownSeconds);
-    }
-
-    private static void SetRadialFill(Image image, float fillAmount)
-    {
-        if (image == null)
-        {
-            return;
-        }
-
-        image.type = Image.Type.Filled;
-        image.fillMethod = Image.FillMethod.Radial360;
-        image.fillAmount = Mathf.Clamp01(fillAmount);
-    }
-
-    private static void SetText(TextMeshProUGUI text, string value)
-    {
-        if (text != null)
-        {
-            text.text = value;
-        }
+        GUI.Label(new Rect(26, 118, width - 28, 22), $"Time {TimeScoreUI.FormatSurvivalTime(gameOver ? finalSurvivalTime : survivalTime)}");
     }
 
     private void SetIngameUIVisible(bool visible)
@@ -491,70 +438,6 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     {
         float inverse = 1f - Mathf.Clamp01(t);
         return 1f - inverse * inverse * inverse;
-    }
-
-    private void EnsureTotalScoreText()
-    {
-        if (!useGraphicUI || totalScoreText != null)
-        {
-            return;
-        }
-
-        Canvas canvas = survivalTimeText != null ? survivalTimeText.GetComponentInParent<Canvas>() : null;
-        if (canvas == null)
-        {
-            return;
-        }
-
-        GameObject scoreObject = new GameObject("Total Score Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
-        scoreObject.layer = survivalTimeText != null ? survivalTimeText.gameObject.layer : canvas.gameObject.layer;
-        scoreObject.transform.SetParent(canvas.transform, false);
-
-        totalScoreText = scoreObject.GetComponent<TextMeshProUGUI>();
-        totalScoreText.raycastTarget = false;
-        totalScoreText.text = "Score 0";
-        totalScoreText.alignment = TextAlignmentOptions.Right;
-
-        if (survivalTimeText != null)
-        {
-            totalScoreText.font = survivalTimeText.font;
-            totalScoreText.fontSharedMaterial = survivalTimeText.fontSharedMaterial;
-            totalScoreText.color = survivalTimeText.color;
-            totalScoreText.fontSize = Mathf.Max(28f, survivalTimeText.fontSize * 0.7f);
-        }
-        else
-        {
-            totalScoreText.fontSize = 42f;
-        }
-
-        RectTransform rect = totalScoreText.rectTransform;
-        if (survivalTimeText != null)
-        {
-            RectTransform source = survivalTimeText.rectTransform;
-            rect.anchorMin = source.anchorMin;
-            rect.anchorMax = source.anchorMax;
-            rect.pivot = source.pivot;
-            rect.anchoredPosition = source.anchoredPosition + new Vector2(0f, -70f);
-            rect.sizeDelta = new Vector2(Mathf.Max(source.sizeDelta.x, 480f), source.sizeDelta.y);
-        }
-        else
-        {
-            rect.anchorMin = new Vector2(1f, 1f);
-            rect.anchorMax = new Vector2(1f, 1f);
-            rect.pivot = new Vector2(1f, 1f);
-            rect.anchoredPosition = new Vector2(-60f, -120f);
-            rect.sizeDelta = new Vector2(480f, 64f);
-        }
-    }
-
-    private static string FormatSurvivalTime(float seconds)
-    {
-        float clampedSeconds = Mathf.Max(0f, seconds);
-        int centiseconds = Mathf.FloorToInt(clampedSeconds * 100f);
-        int minutes = centiseconds / 6000;
-        int remainingSeconds = centiseconds / 100 % 60;
-        int remainingCentiseconds = centiseconds % 100;
-        return $"{minutes:00}:{remainingSeconds:00}.{remainingCentiseconds:00}";
     }
 
     private void BuildScene()
@@ -1055,7 +938,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         gameOver = true;
         RankManager.SaveRecord(totalScore, finalSurvivalTime);
         SetIngameUIVisible(false);
-        gameOverUI?.Show(FormatSurvivalTime(finalSurvivalTime), totalScore, RestartPrototype, ReturnToMainMenu);
+        gameOverUI?.Show(TimeScoreUI.FormatSurvivalTime(finalSurvivalTime), totalScore, RestartPrototype, ReturnToMainMenu);
         Time.timeScale = 0f;
         UpdateGameplayUI();
     }
