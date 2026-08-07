@@ -10,13 +10,21 @@ public class UpgradeUI : MonoBehaviour
 
     [Header("Upgrade Buttons")]
     [SerializeField] private Button buttonMod1;
-    [SerializeField] private Button buttonMod2, buttonMod3;
-    [SerializeField] private TextMeshProUGUI 
-    buttonMod1Title, buttonMod1Desc, buttonMod2Title, buttonMod2Desc, buttonMod3Title, buttonMod3Desc;
+    [SerializeField] private TextMeshProUGUI buttonMod1Title, buttonMod1Desc;
+    [SerializeField] private Image buttonSprite1;
+    [Space]
+    [SerializeField] private Button buttonMod2;
+    [SerializeField] private TextMeshProUGUI buttonMod2Title, buttonMod2Desc;
+    [SerializeField] private Image buttonSprite2;
+    [Space]
+    [SerializeField] private Button  buttonMod3;
+    [SerializeField] private TextMeshProUGUI buttonMod3Title, buttonMod3Desc;
+    [SerializeField] private Image buttonSprite3;
 
     private Button[] buttons;
     private TextMeshProUGUI[] buttonTitles;
     private TextMeshProUGUI[] buttonDescriptions;
+    private Image[] buttonSprites;
     private Action<int> onSelected;
 
     private void Awake()
@@ -42,12 +50,14 @@ public class UpgradeUI : MonoBehaviour
 
             if (!hasChoice)
             {
+                SetSprite(buttonSprites[i], null);
                 continue;
             }
 
             int choiceIndex = i;
             SetText(buttonTitles[i], choices[i].Title);
             SetText(buttonDescriptions[i], choices[i].Description);
+            SetSprite(buttonSprites[i], choices[i].Icon);
             buttons[i].onClick.AddListener(() => Select(choiceIndex));
         }
 
@@ -71,6 +81,7 @@ public class UpgradeUI : MonoBehaviour
         buttons ??= new[] { buttonMod1, buttonMod2, buttonMod3 };
         buttonTitles ??= new[] { buttonMod1Title, buttonMod2Title, buttonMod3Title };
         buttonDescriptions ??= new[] { buttonMod1Desc, buttonMod2Desc, buttonMod3Desc };
+        buttonSprites ??= new[] { buttonSprite1, buttonSprite2, buttonSprite3 };
     }
 
     private void SelectDefaultButton()
@@ -102,15 +113,34 @@ public class UpgradeUI : MonoBehaviour
         }
     }
 
+    private static void SetSprite(Image image, Sprite sprite)
+    {
+        if (image == null)
+        {
+            return;
+        }
+
+        image.sprite = sprite;
+        image.enabled = sprite != null;
+        image.preserveAspect = true;
+    }
+
     public readonly struct UpgradeChoice
     {
         public UpgradeChoice(string title, string description)
+            : this(title, description, null)
+        {
+        }
+
+        public UpgradeChoice(string title, string description, Sprite icon)
         {
             Title = title;
             Description = description;
+            Icon = icon;
         }
 
         public string Title { get; }
         public string Description { get; }
+        public Sprite Icon { get; }
     }
 }

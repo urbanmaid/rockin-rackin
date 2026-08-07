@@ -1799,6 +1799,7 @@ MonoBehaviour:
   timeScoreUI: {fileID: 5316290460289391023}
   auxScore: {fileID: 5316290460289391022}
   upgradeUI: {fileID: 7943923925636077160}
+  upgradeItemSprite: {fileID: 11400000, guid: ba3ae30b23f8eee4589fd2c7b74cab6e, type: 2}
   gameOverUI: {fileID: 1864266611}
   mainMenuSceneName: SampleScene
 --- !u!1 &1583101237

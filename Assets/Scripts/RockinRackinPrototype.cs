@@ -94,6 +94,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
     [Header("Graphic UI - Outgame")]
     [SerializeField] private UpgradeUI upgradeUI;
+    [SerializeField] private UpgradeItemDictionary upgradeItemSprite;
     [SerializeField] private GameOverUI gameOverUI;
     [SerializeField] private string mainMenuSceneName;
 
@@ -1222,39 +1223,39 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
         return kind switch
         {
-            UpgradeKind.ItemDensity => new UpgradeOption("Health Item Density " + grade, "Health items spawn faster and the item cap increases.", () =>
+            UpgradeKind.ItemDensity => new UpgradeOption(kind, "Health Item Density " + grade, "Health items spawn faster and the item cap increases.", () =>
             {
                 healthSpawnInterval = Mathf.Max(0.75f, healthSpawnInterval - 0.42f * multiplier);
                 maxPickups += highGrade ? 4 : 2;
             }),
-            UpgradeKind.MaxHealth => new UpgradeOption("Max Health " + grade, "Increase max health and restore the same amount immediately.", () =>
+            UpgradeKind.MaxHealth => new UpgradeOption(kind, "Max Health " + grade, "Increase max health and restore the same amount immediately.", () =>
             {
                 float increase = 18f * multiplier;
                 maxHealth += increase;
                 health = Mathf.Min(maxHealth, health + increase);
             }),
-            UpgradeKind.BoostTilt => new UpgradeOption("Tilt Boost " + grade, "Increase boosted tilt angle and lift impulse.", () =>
+            UpgradeKind.BoostTilt => new UpgradeOption(kind, "Tilt Boost " + grade, "Increase boosted tilt angle and lift impulse.", () =>
             {
                 boostTiltDegrees += 3.2f * multiplier;
                 suddenTiltLiftImpulse += 0.9f * multiplier;
             }),
-            UpgradeKind.PushCooldown => new UpgradeOption("Push Cooldown " + grade, "Reduce the push ability cooldown.", () =>
+            UpgradeKind.PushCooldown => new UpgradeOption(kind, "Push Cooldown " + grade, "Reduce the push ability cooldown.", () =>
             {
                 pushCooldownSeconds = Mathf.Max(1.2f, pushCooldownSeconds - 0.7f * multiplier);
             }),
-            UpgradeKind.PushPower => new UpgradeOption("Push Power " + grade, "Increase the impulse applied by the push ability.", () =>
+            UpgradeKind.PushPower => new UpgradeOption(kind, "Push Power " + grade, "Increase the impulse applied by the push ability.", () =>
             {
                 pushImpulse += 3.5f * multiplier;
             }),
-            UpgradeKind.PushRange => new UpgradeOption("Push Range " + grade, "Increase the radius of the push force field.", () =>
+            UpgradeKind.PushRange => new UpgradeOption(kind, "Push Range " + grade, "Increase the radius of the push force field.", () =>
             {
                 pushRadius += 0.85f * multiplier;
             }),
-            UpgradeKind.SpawnPause => new UpgradeOption("Catch Breath " + grade, $"Pause enemy spawns for {enemySpawnPauseUpgradeSeconds * multiplier:0.#}s.", () =>
+            UpgradeKind.SpawnPause => new UpgradeOption(kind, "Catch Breath " + grade, $"Pause enemy spawns for {enemySpawnPauseUpgradeSeconds * multiplier:0.#}s.", () =>
             {
                 PauseEnemySpawns(enemySpawnPauseUpgradeSeconds * multiplier);
             }),
-            _ => new UpgradeOption("Luck " + grade, "Boost drops, rares, and crits.", () =>
+            _ => new UpgradeOption(kind, "Luck " + grade, "Boost drops, rares, and crits.", () =>
             {
                 luck += 0.18f * multiplier;
             })
@@ -1271,7 +1272,8 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         UpgradeUI.UpgradeChoice[] choices = new UpgradeUI.UpgradeChoice[pendingUpgrades.Count];
         for (int i = 0; i < pendingUpgrades.Count; i++)
         {
-            choices[i] = new UpgradeUI.UpgradeChoice(pendingUpgrades[i].Title, pendingUpgrades[i].Description);
+            Sprite icon = upgradeItemSprite != null ? upgradeItemSprite.GetSprite(pendingUpgrades[i].Kind) : null;
+            choices[i] = new UpgradeUI.UpgradeChoice(pendingUpgrades[i].Title, pendingUpgrades[i].Description, icon);
         }
 
         upgradeUI.Show(level + 1, "Select one upgrade to continue.", choices, SelectUpgrade);
@@ -1331,19 +1333,21 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
     private readonly struct UpgradeOption
     {
-        public UpgradeOption(string title, string description, Action apply)
+        public UpgradeOption(UpgradeKind kind, string title, string description, Action apply)
         {
+            Kind = kind;
             Title = title;
             Description = description;
             Apply = apply;
         }
 
+        public UpgradeKind Kind { get; }
         public string Title { get; }
         public string Description { get; }
         public Action Apply { get; }
     }
 
-    private enum UpgradeKind
+    public enum UpgradeKind
     {
         ItemDensity,
         MaxHealth,
