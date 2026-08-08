@@ -310,12 +310,17 @@ public static class RankManager
         SaveRecordList(recordList);
     }
 
-    public static void ClearRecords()
+    public static void ResetRecords()
     {
         if (File.Exists(RecordFilePath))
         {
             File.Delete(RecordFilePath);
         }
+    }
+
+    public static void ClearRecords()
+    {
+        ResetRecords();
     }
 
     private static RankRecordList LoadRecordList()
