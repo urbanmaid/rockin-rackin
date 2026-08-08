@@ -69,9 +69,9 @@ AudioMixerController:
   m_UpdateMode: 0
   m_ExposedParameters:
   - guid: 3c19dd37874eac943a833d1e1b783492
-    name: MyExposedParam
+    name: VolBGM
   - guid: 1bd7af4a4cb00bd42be0a1836e279a1b
-    name: MyExposedParam 1
+    name: VolSFX
   m_AudioMixerGroupViews:
   - guids:
     - cf1406673f1c0c24aae6d66a5cdead81
