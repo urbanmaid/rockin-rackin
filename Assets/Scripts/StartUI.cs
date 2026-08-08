@@ -19,6 +19,7 @@ public class StartUI : MonoBehaviour
     [SerializeField] private Button buttonExit;
 
     [Header("Start related UI objects")]
+    [SerializeField] private GameObject mainUI;
     [SerializeField] private GameObject playTipsUI;
     [SerializeField] private GameObject settingsUI;
 
@@ -29,8 +30,7 @@ public class StartUI : MonoBehaviour
     {
         CacheReferences();
         BindButtons();
-        SetOptionalPanelVisible(playTipsUI, false);
-        SetOptionalPanelVisible(settingsUI, false);
+        ShowMainUI();
     }
 
     private void Start()
@@ -77,12 +77,24 @@ public class StartUI : MonoBehaviour
 
     public void TogglePlayTips()
     {
-        ToggleOptionalPanel(playTipsUI);
+        if (playTipsUI != null && playTipsUI.activeSelf)
+        {
+            ShowMainUI();
+            return;
+        }
+
+        ShowOnly(playTipsUI);
     }
 
     public void ToggleSettings()
     {
-        ToggleOptionalPanel(settingsUI);
+        if (settingsUI != null && settingsUI.activeSelf)
+        {
+            ShowMainUI();
+            return;
+        }
+
+        ShowOnly(settingsUI);
     }
 
     public void ExitGame()
@@ -102,6 +114,11 @@ public class StartUI : MonoBehaviour
         buttonPlayTips ??= FindButton(buttons, "tip", "control", "help");
         buttonSettings ??= FindButton(buttons, "setting", "option");
         buttonExit ??= FindButton(buttons, "exit", "quit");
+
+        if (buttonSettings == buttonPlayTips)
+        {
+            buttonSettings = FindButtonExcept(buttons, buttonPlayTips, "setting", "option");
+        }
 
         if (buttonStart == null && buttons.Length > 0)
         {
@@ -145,6 +162,28 @@ public class StartUI : MonoBehaviour
     {
         for (int i = 0; i < buttons.Length; i++)
         {
+            string buttonName = buttons[i].name.ToLowerInvariant();
+            for (int hintIndex = 0; hintIndex < nameHints.Length; hintIndex++)
+            {
+                if (buttonName.Contains(nameHints[hintIndex]))
+                {
+                    return buttons[i];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static Button FindButtonExcept(Button[] buttons, Button excludedButton, params string[] nameHints)
+    {
+        for (int i = 0; i < buttons.Length; i++)
+        {
+            if (buttons[i] == excludedButton)
+            {
+                continue;
+            }
+
             string buttonName = buttons[i].name.ToLowerInvariant();
             for (int hintIndex = 0; hintIndex < nameHints.Length; hintIndex++)
             {
@@ -209,20 +248,22 @@ public class StartUI : MonoBehaviour
         buttonStart.Select();
     }
 
-    private static void ToggleOptionalPanel(GameObject panel)
+    private void ShowMainUI()
     {
-        if (panel != null)
-        {
-            panel.SetActive(!panel.activeSelf);
-        }
+        ShowOnly(mainUI);
     }
 
-    private static void SetOptionalPanelVisible(GameObject panel, bool visible)
+    private void ShowOnly(GameObject visiblePanel)
     {
-        if (panel != null)
-        {
-            panel.SetActive(visible);
-        }
+        SetPanelVisible(mainUI, visiblePanel == mainUI || visiblePanel == null);
+        SetPanelVisible(playTipsUI, visiblePanel == playTipsUI);
+        SetPanelVisible(settingsUI, visiblePanel == settingsUI);
+        SelectDefaultButton();
+    }
+
+    private static void SetPanelVisible(GameObject panel, bool visible)
+    {
+        panel?.SetActive(visible);
     }
 }
 
