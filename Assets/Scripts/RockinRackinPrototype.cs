@@ -106,6 +106,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     private Transform healthItemRoot;
     private Collider stageCollider;
     private Rigidbody playerBody;
+    private RollingBallAgent playerAgent;
     private Camera mainCamera;
     private InputAction tiltAction;
     private InputAction pushAction;
@@ -594,6 +595,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
             return;
         }
 
+        playerAgent = agent;
         agent.Configure(this, false, maxHealth);
     }
 
@@ -801,6 +803,8 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
         pushCooldownTimer = pushCooldownSeconds;
         StartPushCameraFovPulse();
+        playerAgent?.PlayEffectParticle();
+
         Vector3 playerPosition = playerBody.position;
         for (int i = enemies.Count - 1; i >= 0; i--)
         {
@@ -971,7 +975,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
             if (IsOutsideField(enemy.transform.position))
             {
                 AddEnemyScore(enemy.HasConfirmedPushRingOut(pushRingOutMinimumPlanarSpeed) ? pushRingOutScore : tiltRingOutScore);
-                DestroyEnemy(enemy, true);
+                DestroyEnemy(enemy, true, true);
             }
         }
     }
@@ -1050,11 +1054,11 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         enemy.Health -= amount;
         if (enemy.Health <= 0f)
         {
-            DestroyEnemy(enemy, true);
+            DestroyEnemy(enemy, true, false);
         }
     }
 
-    private void DestroyEnemy(RollingBallAgent enemy, bool allowDrop)
+    private void DestroyEnemy(RollingBallAgent enemy, bool allowDrop, bool playEffectParticle)
     {
         if (enemy == null)
         {
@@ -1063,6 +1067,11 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
         enemies.Remove(enemy);
         Vector3 dropPosition = enemy.transform.position;
+        if (playEffectParticle)
+        {
+            enemy.PlayEffectParticle();
+        }
+
         Destroy(enemy.gameObject);
 
         float dropChance = Mathf.Clamp01(0.62f + luck * 0.2f);
@@ -1149,6 +1158,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
         health = Mathf.Min(maxHealth, health + healthRestore);
         upgradePoints++;
+        pickup.PlayEffectParticle();
         Destroy(pickup.gameObject);
 
         if (upgradePoints >= nextUpgradeScore)

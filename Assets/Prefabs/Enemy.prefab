@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 7049343214350857463}
   - component: {fileID: 2520092111388249062}
   m_Layer: 0
-  m_Name: Enemy Sphere
+  m_Name: Enemy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -153,3 +153,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ca0213e0e9641e9a19059eed26523bf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RollingBallAgent
+  EffectParticle: {fileID: 2089364323173638373, guid: 99a254939b4d3b144a5f19d42aed508d, type: 3}
+  effectParticleLifetime: 1.5

@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &4019885223677249585
+--- !u!1 &1209678972099091929
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,49 +8,49 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 5896338096796267270}
-  - component: {fileID: 4365167483267524945}
-  - component: {fileID: 4078280100691615474}
-  - component: {fileID: 5028327156968450209}
-  - component: {fileID: 782247422869153093}
-  - component: {fileID: 8286517812385388053}
+  - component: {fileID: 9159410294151381264}
+  - component: {fileID: 2000627514429045163}
+  - component: {fileID: 9004582381143967480}
+  - component: {fileID: 2654311150262911997}
+  - component: {fileID: 6586500545370856139}
+  - component: {fileID: 8354923569498819408}
   m_Layer: 0
-  m_Name: Health Pickup
+  m_Name: Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &5896338096796267270
+--- !u!4 &9159410294151381264
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4019885223677249585}
+  m_GameObject: {fileID: 1209678972099091929}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0.94719285, z: 0, w: 0.32066458}
-  m_LocalPosition: {x: -1.1339369, y: 0.45, z: -6.64135}
-  m_LocalScale: {x: 0.55, y: 0.55, z: 0.55}
+  m_LocalRotation: {x: 3.3439736e-17, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.55, z: 3.688741e-17}
+  m_LocalScale: {x: 1.1, y: 1.1, z: 1.1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &4365167483267524945
+--- !u!33 &2000627514429045163
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4019885223677249585}
+  m_GameObject: {fileID: 1209678972099091929}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
---- !u!135 &4078280100691615474
+--- !u!135 &9004582381143967480
 SphereCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4019885223677249585}
+  m_GameObject: {fileID: 1209678972099091929}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -59,19 +59,19 @@ SphereCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
   m_Radius: 0.5
   m_Center: {x: 0, y: 0, z: 0}
---- !u!23 &5028327156968450209
+--- !u!23 &2654311150262911997
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4019885223677249585}
+  m_GameObject: {fileID: 1209678972099091929}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -90,7 +90,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: f4d32fd7ffc443f48dbe4d91648ff3e2, type: 2}
+  - {fileID: 2100000, guid: 49c2399f116b4de1af4583023673854b, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -114,17 +114,17 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!54 &782247422869153093
+--- !u!54 &6586500545370856139
 Rigidbody:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4019885223677249585}
+  m_GameObject: {fileID: 1209678972099091929}
   serializedVersion: 5
-  m_Mass: 1
-  m_LinearDamping: 0
-  m_AngularDamping: 0.05
+  m_Mass: 0.5
+  m_LinearDamping: 0.025
+  m_AngularDamping: 0
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -136,20 +136,22 @@ Rigidbody:
     m_Bits: 0
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 0
-  m_IsKinematic: 1
-  m_Interpolate: 0
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 1
   m_Constraints: 0
-  m_CollisionDetection: 0
---- !u!114 &8286517812385388053
+  m_CollisionDetection: 2
+--- !u!114 &8354923569498819408
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4019885223677249585}
+  m_GameObject: {fileID: 1209678972099091929}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ce136630f91144d49a8b1582a33d726d, type: 3}
+  m_Script: {fileID: 11500000, guid: 7ca0213e0e9641e9a19059eed26523bf, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HealthPickup
+  m_EditorClassIdentifier: Assembly-CSharp::RollingBallAgent
+  EffectParticle: {fileID: 2089364323173638373, guid: 3bde710c30e9de04799529515d8f94cc, type: 3}
+  effectParticleLifetime: 1.5

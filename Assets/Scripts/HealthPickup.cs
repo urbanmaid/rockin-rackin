@@ -2,11 +2,39 @@ using UnityEngine;
 
 public sealed class HealthPickup : MonoBehaviour
 {
+    [SerializeField] private GameObject EffectParticle;
+    [SerializeField] private float effectParticleLifetime = 1.5f;
+
     private RockinRackinPrototype controller;
 
     public void Configure(RockinRackinPrototype owner)
     {
         controller = owner;
+
+        if (EffectParticle != null)
+        {
+            EffectParticle.SetActive(false);
+        }
+    }
+
+    public void PlayEffectParticle()
+    {
+        if (EffectParticle == null)
+        {
+            return;
+        }
+
+        GameObject effect = Instantiate(EffectParticle, transform.position, transform.rotation);
+        effect.transform.localScale = EffectParticle.transform.lossyScale;
+        effect.SetActive(true);
+
+        ParticleSystem[] particleSystems = effect.GetComponentsInChildren<ParticleSystem>(true);
+        for (int i = 0; i < particleSystems.Length; i++)
+        {
+            particleSystems[i].Play(true);
+        }
+
+        Destroy(effect, Mathf.Max(0.01f, effectParticleLifetime));
     }
 
     private void Update()

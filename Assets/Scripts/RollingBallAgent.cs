@@ -2,6 +2,9 @@ using UnityEngine;
 
 public sealed class RollingBallAgent : MonoBehaviour
 {
+    [SerializeField] private GameObject EffectParticle;
+    [SerializeField] private float effectParticleLifetime = 1.5f;
+
     private RockinRackinPrototype controller;
     private bool isEnemy;
     private Vector3 previousVelocity;
@@ -21,6 +24,31 @@ public sealed class RollingBallAgent : MonoBehaviour
         Body = GetComponent<Rigidbody>();
         pushRingOutScoreExpiresAt = float.NegativeInfinity;
         wasAffectedByPushForceField = false;
+
+        if (EffectParticle != null)
+        {
+            EffectParticle.SetActive(false);
+        }
+    }
+
+    public void PlayEffectParticle()
+    {
+        if (EffectParticle == null)
+        {
+            return;
+        }
+
+        GameObject effect = Instantiate(EffectParticle, transform.position, transform.rotation);
+        effect.transform.localScale = EffectParticle.transform.lossyScale;
+        effect.SetActive(true);
+
+        ParticleSystem[] particleSystems = effect.GetComponentsInChildren<ParticleSystem>(true);
+        for (int i = 0; i < particleSystems.Length; i++)
+        {
+            particleSystems[i].Play(true);
+        }
+
+        Destroy(effect, Mathf.Max(0.01f, effectParticleLifetime));
     }
 
     public void MarkAffectedByPushForceField(float duration)
