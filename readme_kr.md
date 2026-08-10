@@ -53,3 +53,6 @@
     - 계획 명세서와 실제 게임플레이 검토 후, 플레이 경험과 차이가 나는 사항에 대한 수정을 반복적으로 요청하면서 제작.
     - 게임 코드 대부분과 쉐이더 코드는 AI 사용.
     - 게임 코드 일부분과 아트 어셋, UI, 파티클 등은 AI 미사용.
+
+# 외부 어셋 및 저작자 목록
+- [Score and Time - Game Sound Solutions](https://assetstore.unity.com/packages/audio/sound-fx/score-and-time-59255)

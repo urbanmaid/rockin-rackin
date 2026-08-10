@@ -1,15 +1,18 @@
 using UnityEngine;
+using UnityEngine.Audio;
 
 public sealed class RollingBallAgent : MonoBehaviour
 {
     [SerializeField] private GameObject EffectParticle;
     [SerializeField] private float effectParticleLifetime = 1.5f;
+    [SerializeField] private AudioSource sfxAudioSource;
 
     private RockinRackinPrototype controller;
     private bool isEnemy;
     private Vector3 previousVelocity;
     private float pushRingOutScoreExpiresAt;
     private bool wasAffectedByPushForceField;
+    private bool pendingDestroy;
 
     public Rigidbody Body { get; private set; }
     private Vector3 toPlayer = Vector3.zero;
@@ -24,6 +27,7 @@ public sealed class RollingBallAgent : MonoBehaviour
         Body = GetComponent<Rigidbody>();
         pushRingOutScoreExpiresAt = float.NegativeInfinity;
         wasAffectedByPushForceField = false;
+        pendingDestroy = false;
 
         if (EffectParticle != null)
         {
@@ -51,6 +55,44 @@ public sealed class RollingBallAgent : MonoBehaviour
         Destroy(effect, Mathf.Max(0.01f, effectParticleLifetime));
     }
 
+    public float PlaySfx(AudioClip clip, float volume, AudioMixerGroup outputAudioMixerGroup)
+    {
+        if (clip == null)
+        {
+            return 0f;
+        }
+
+        CacheSfxAudioSource();
+        sfxAudioSource.outputAudioMixerGroup = outputAudioMixerGroup;
+        sfxAudioSource.PlayOneShot(clip, volume);
+        return clip.length;
+    }
+
+    public void PrepareForDelayedDestroy()
+    {
+        pendingDestroy = true;
+
+        if (Body != null)
+        {
+            Body.linearVelocity = Vector3.zero;
+            Body.angularVelocity = Vector3.zero;
+            Body.isKinematic = true;
+            Body.detectCollisions = false;
+        }
+
+        Collider[] colliders = GetComponentsInChildren<Collider>(true);
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            colliders[i].enabled = false;
+        }
+
+        Renderer[] renderers = GetComponentsInChildren<Renderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            renderers[i].enabled = false;
+        }
+    }
+
     public void MarkAffectedByPushForceField(float duration)
     {
         wasAffectedByPushForceField = true;
@@ -71,6 +113,11 @@ public sealed class RollingBallAgent : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (pendingDestroy)
+        {
+            return;
+        }
+
         if (Body == null)
         {
             return;
@@ -93,7 +140,7 @@ public sealed class RollingBallAgent : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (controller == null)
+        if (controller == null || pendingDestroy)
         {
             return;
         }
@@ -108,12 +155,17 @@ public sealed class RollingBallAgent : MonoBehaviour
 
     private void OnCollisionStay(Collision collision)
     {
+        if (pendingDestroy)
+        {
+            return;
+        }
+
         TryDamagePlayer(collision.collider);
     }
 
     private void TryDamagePlayer(Collider other)
     {
-        if (controller == null || isEnemy)
+        if (controller == null || isEnemy || pendingDestroy)
         {
             return;
         }
@@ -123,5 +175,21 @@ public sealed class RollingBallAgent : MonoBehaviour
         {
             controller.DamagePlayer(controller.ContactDamage);
         }
+    }
+
+    private void CacheSfxAudioSource()
+    {
+        if (sfxAudioSource == null)
+        {
+            sfxAudioSource = GetComponent<AudioSource>();
+        }
+
+        if (sfxAudioSource == null)
+        {
+            sfxAudioSource = gameObject.AddComponent<AudioSource>();
+        }
+
+        sfxAudioSource.playOnAwake = false;
+        sfxAudioSource.spatialBlend = 1f;
     }
 }

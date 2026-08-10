@@ -582,8 +582,8 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 8651892317541301736}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMin: {x: 0.367, y: 0}
+  m_AnchorMax: {x: 0.367, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 40, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -735,7 +735,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 120}
+  m_SizeDelta: {x: 0, y: 240}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &855713477601879098
 CanvasRenderer:
@@ -768,7 +768,12 @@ MonoBehaviour:
   m_text: 'Copyrights to Urbanmaid
 
     Most of the architectural code of this software
-    excluding art assets, was created using generative AI.'
+    excluding art assets, was created using generative AI.
+
+
+    Please check below
+    for information regarding the creators of assets that were not generated or created
+    by us. '
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 74e0ac8db868a0a488fe8b5a3bf91111, type: 2}
   m_sharedMaterial: {fileID: -5631991259745410476, guid: 74e0ac8db868a0a488fe8b5a3bf91111, type: 2}
@@ -1518,7 +1523,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &4552262606651674571
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1536,10 +1541,10 @@ RectTransform:
   - {fileID: 8304369267879429062}
   m_Father: {fileID: 7539096907627916066}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 40}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 523.5, y: -130}
+  m_SizeDelta: {x: 1047, y: 40}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &3105251443586639030
 MonoBehaviour:
@@ -1720,8 +1725,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 4311669882842164112}
   m_HandleRect: {fileID: 8585806805429195037}
   m_Direction: 2
-  m_Value: 0
-  m_Size: 1
+  m_Value: 1
+  m_Size: 0.9797297
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -3044,7 +3049,7 @@ RectTransform:
   m_Father: {fileID: 1878676591734255189}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMax: {x: 0.367, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}

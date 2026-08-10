@@ -154,6 +154,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
         gameplayStarted = true;
         Time.timeScale = 1f;
+        GameBgmPlayer.PlayGameplay();
         SetIngameUIVisible(true);
         SetInputEnabled(true);
     }
@@ -168,6 +169,14 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         BuildInputActions();
         BuildScene();
         SetIngameUIVisible(gameplayStarted);
+        if (gameplayStarted)
+        {
+            GameBgmPlayer.PlayGameplay();
+        }
+        else
+        {
+            GameBgmPlayer.PlayMainMenu();
+        }
     }
 
     private void OnEnable()
@@ -1022,6 +1031,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         health = Mathf.Max(0f, health - amount);
         invulnerableTimer = invulnerableSeconds;
         StartDamageCameraShake();
+        GameSfxPlayer.PlayPlayerDamage();
         if (health <= 0f)
         {
             EndGame();
@@ -1039,6 +1049,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         gameOver = true;
         RankManager.SaveRecord(totalScore, finalSurvivalTime);
         SetIngameUIVisible(false);
+        GameBgmPlayer.PlayGameOver();
         gameOverUI?.Show(TimeScoreUI.FormatSurvivalTime(finalSurvivalTime), totalScore, RestartPrototype, ReturnToMainMenu);
         Time.timeScale = 0f;
         UpdateGameplayUI();
@@ -1067,12 +1078,14 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
         enemies.Remove(enemy);
         Vector3 dropPosition = enemy.transform.position;
+        float destroyDelay = GameSfxPlayer.PlayEnemyDestroy(enemy);
         if (playEffectParticle)
         {
             enemy.PlayEffectParticle();
         }
 
-        Destroy(enemy.gameObject);
+        enemy.PrepareForDelayedDestroy();
+        Destroy(enemy.gameObject, Mathf.Max(0.01f, destroyDelay));
 
         float dropChance = Mathf.Clamp01(0.62f + luck * 0.2f);
         if (allowDrop && UnityEngine.Random.value <= dropChance)
@@ -1158,6 +1171,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
         health = Mathf.Min(maxHealth, health + healthRestore);
         upgradePoints++;
+        GameSfxPlayer.PlayHealthPickup();
         pickup.PlayEffectParticle();
         Destroy(pickup.gameObject);
 
@@ -1193,6 +1207,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     {
         upgradeOpen = true;
         Time.timeScale = 0f;
+        GameSfxPlayer.PlayUpgradeAvailable();
         pendingUpgrades.Clear();
 
         List<UpgradeKind> pool = new()
@@ -1317,6 +1332,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
             Rect button = new Rect(panel.x + 24f, panel.y + 70f + i * 54f, panel.width - 48f, 42f);
             if (GUI.Button(button, $"{option.Title}\n{option.Description}"))
             {
+                GameSfxPlayer.PlayUiClick();
                 SelectUpgrade(i);
             }
         }

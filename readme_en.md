@@ -53,3 +53,6 @@ The player must keep moving and survive by eating health items.
 After reviewing the plan specifications and actual gameplay, it was developed while repeatedly requesting revisions for any differences from the play experience.
 Most of the game code and shader code use AI.
     - Some parts of the game code, as well as art assets, UI, and particles, do not use AI.
+
+# Extenal Asset Information
+- [Score and Time - Game Sound Solutions](https://assetstore.unity.com/packages/audio/sound-fx/score-and-time-59255)
