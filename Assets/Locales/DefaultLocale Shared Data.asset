@@ -179,6 +179,26 @@ MonoBehaviour:
     m_Key: ingame.upgrade.category.luck.desc
     m_Metadata:
       m_Items: []
+  - m_Id: 5039347134464
+    m_Key: ingame.gameover.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5548745355264
+    m_Key: ingame.gameover.survivedtime
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5577426006016
+    m_Key: ingame.gameover.score
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5876031090688
+    m_Key: ingame.gameover.retry
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5899527581696
+    m_Key: ingame.gameover.menu
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

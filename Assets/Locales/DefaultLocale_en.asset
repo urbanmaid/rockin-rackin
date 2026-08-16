@@ -224,6 +224,26 @@ MonoBehaviour:
     m_Localized: Increase max health and restore the same amount immediately.
     m_Metadata:
       m_Items: []
+  - m_Id: 5899527581696
+    m_Localized: Main Menu
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5876031090688
+    m_Localized: Retry
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5548745355264
+    m_Localized: Survived Time
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5577426006016
+    m_Localized: Score
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5039347134464
+    m_Localized: Game Over!
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []
