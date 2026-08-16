@@ -2,11 +2,16 @@ using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Localization;
+using UnityEngine.Localization.Settings;
 using UnityEngine.UI;
 
 public class UpgradeUI : MonoBehaviour
 {
+    private const string UpgradeTitleKey = "ingame.upgrade.title";
+
     [SerializeField] private TextMeshProUGUI upgrageUITitle, upgrageUIDesc;
+    [SerializeField] private string localizationTableName = "DefaultLocale";
 
     [Header("Upgrade Buttons")]
     [SerializeField] private Button buttonMod1;
@@ -26,6 +31,11 @@ public class UpgradeUI : MonoBehaviour
     private TextMeshProUGUI[] buttonDescriptions;
     private Image[] buttonSprites;
     private Action<int> onSelected;
+    private int currentNextLevel;
+    private string currentDescription;
+    private string currentDescriptionKey;
+    private UpgradeChoice[] currentChoices;
+    private bool useLocalizedContent;
 
     private void Awake()
     {
@@ -33,18 +43,54 @@ public class UpgradeUI : MonoBehaviour
         Hide();
     }
 
+    private void OnEnable()
+    {
+        LocalizationSettings.SelectedLocaleChanged += OnSelectedLocaleChanged;
+    }
+
+    private void OnDisable()
+    {
+        LocalizationSettings.SelectedLocaleChanged -= OnSelectedLocaleChanged;
+    }
+
     public void Show(int nextLevel, string description, UpgradeChoice[] choices, Action<int> selectedCallback)
     {
         CacheControls();
         onSelected = selectedCallback;
+        currentNextLevel = nextLevel;
+        currentDescription = description;
+        currentDescriptionKey = null;
+        currentChoices = choices;
+        useLocalizedContent = false;
         gameObject.SetActive(true);
 
-        SetText(upgrageUITitle, $"Level {nextLevel} Upgrade");
-        SetText(upgrageUIDesc, description);
+        RefreshTexts();
+        SelectDefaultButton();
+    }
+
+    public void ShowLocalized(int nextLevel, string descriptionKey, UpgradeChoice[] choices, Action<int> selectedCallback)
+    {
+        CacheControls();
+        onSelected = selectedCallback;
+        currentNextLevel = nextLevel;
+        currentDescription = null;
+        currentDescriptionKey = descriptionKey;
+        currentChoices = choices;
+        useLocalizedContent = true;
+        gameObject.SetActive(true);
+
+        RefreshTexts();
+        SelectDefaultButton();
+    }
+
+    private void RefreshTexts()
+    {
+        SetText(upgrageUITitle, useLocalizedContent ? GetLocalizedText(UpgradeTitleKey, currentNextLevel) : $"Level {currentNextLevel} Upgrade");
+        SetText(upgrageUIDesc, useLocalizedContent ? GetLocalizedText(currentDescriptionKey) : currentDescription);
 
         for (int i = 0; i < buttons.Length; i++)
         {
-            bool hasChoice = choices != null && i < choices.Length;
+            bool hasChoice = currentChoices != null && i < currentChoices.Length;
             buttons[i].gameObject.SetActive(hasChoice);
             buttons[i].onClick.RemoveAllListeners();
 
@@ -55,19 +101,18 @@ public class UpgradeUI : MonoBehaviour
             }
 
             int choiceIndex = i;
-            SetText(buttonTitles[i], choices[i].Title);
-            SetText(buttonDescriptions[i], choices[i].Description);
-            SetSprite(buttonSprites[i], choices[i].Icon);
+            SetText(buttonTitles[i], currentChoices[i].GetTitle(localizationTableName));
+            SetText(buttonDescriptions[i], currentChoices[i].GetDescription(localizationTableName));
+            SetSprite(buttonSprites[i], currentChoices[i].Icon);
             buttons[i].onClick.AddListener(() => Select(choiceIndex));
         }
-
-        SelectDefaultButton();
     }
 
     public void Hide()
     {
         CacheControls();
         onSelected = null;
+        currentChoices = null;
         gameObject.SetActive(false);
     }
 
@@ -125,6 +170,29 @@ public class UpgradeUI : MonoBehaviour
         image.preserveAspect = true;
     }
 
+    private void OnSelectedLocaleChanged(Locale locale)
+    {
+        if (gameObject.activeInHierarchy && useLocalizedContent)
+        {
+            RefreshTexts();
+        }
+    }
+
+    private string GetLocalizedText(string key, params object[] arguments)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            return string.Empty;
+        }
+
+        LocalizedString localizedString = new(localizationTableName, key)
+        {
+            Arguments = arguments
+        };
+
+        return localizedString.GetLocalizedString();
+    }
+
     public readonly struct UpgradeChoice
     {
         public UpgradeChoice(string title, string description)
@@ -137,10 +205,67 @@ public class UpgradeUI : MonoBehaviour
             Title = title;
             Description = description;
             Icon = icon;
+            TitleKey = null;
+            DescriptionKey = null;
+            TitleSuffix = null;
+            TitleArguments = null;
+            DescriptionArguments = null;
         }
 
         public string Title { get; }
         public string Description { get; }
         public Sprite Icon { get; }
+        public string TitleKey { get; }
+        public string DescriptionKey { get; }
+        public string TitleSuffix { get; }
+        public object[] TitleArguments { get; }
+        public object[] DescriptionArguments { get; }
+
+        public static UpgradeChoice Localized(string titleKey, string descriptionKey, Sprite icon, string titleSuffix = null, object[] descriptionArguments = null)
+        {
+            return new UpgradeChoice(titleKey, descriptionKey, icon, titleSuffix, null, descriptionArguments);
+        }
+
+        public string GetTitle(string tableName)
+        {
+            if (string.IsNullOrWhiteSpace(TitleKey))
+            {
+                return Title;
+            }
+
+            return GetLocalizedText(tableName, TitleKey, TitleArguments) + TitleSuffix;
+        }
+
+        public string GetDescription(string tableName)
+        {
+            if (string.IsNullOrWhiteSpace(DescriptionKey))
+            {
+                return Description;
+            }
+
+            return GetLocalizedText(tableName, DescriptionKey, DescriptionArguments);
+        }
+
+        private UpgradeChoice(string titleKey, string descriptionKey, Sprite icon, string titleSuffix, object[] titleArguments, object[] descriptionArguments)
+        {
+            Title = null;
+            Description = null;
+            Icon = icon;
+            TitleKey = titleKey;
+            DescriptionKey = descriptionKey;
+            TitleSuffix = titleSuffix;
+            TitleArguments = titleArguments;
+            DescriptionArguments = descriptionArguments;
+        }
+
+        private static string GetLocalizedText(string tableName, string key, object[] arguments)
+        {
+            LocalizedString localizedString = new(tableName, key)
+            {
+                Arguments = arguments
+            };
+
+            return localizedString.GetLocalizedString();
+        }
     }
 }

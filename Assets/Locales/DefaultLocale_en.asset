@@ -213,7 +213,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 3683097964544
-    m_Localized: Increase the impulse applied by the push ability.
+    m_Localized: Reduce the push ability cooldown.
     m_Metadata:
       m_Items: []
   - m_Id: 3655562358784

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
+using UnityEngine.Localization;
 using UnityEngine;
 
 public sealed class RockinRackinPrototype : MonoBehaviour
@@ -97,6 +98,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     [SerializeField] private UpgradeItemDictionary upgradeItemSprite;
     [SerializeField] private GameOverUI gameOverUI;
     [SerializeField] private string mainMenuSceneName;
+    [SerializeField] private string localizationTableName = "DefaultLocale";
 
     private readonly List<RollingBallAgent> enemies = new();
     private readonly List<HealthPickup> pickups = new();
@@ -1248,42 +1250,42 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
         return kind switch
         {
-            UpgradeKind.ItemDensity => new UpgradeOption(kind, "Health Item Density " + grade, "Health items spawn faster and the item cap increases.", () =>
+            UpgradeKind.ItemDensity => new UpgradeOption(kind, "ingame.upgrade.category.density", "ingame.upgrade.category.density.desc", () =>
             {
                 healthSpawnInterval = Mathf.Max(0.75f, healthSpawnInterval - 0.42f * multiplier);
                 maxPickups += highGrade ? 4 : 2;
-            }),
-            UpgradeKind.MaxHealth => new UpgradeOption(kind, "Max Health " + grade, "Increase max health and restore the same amount immediately.", () =>
+            }, " " + grade),
+            UpgradeKind.MaxHealth => new UpgradeOption(kind, "ingame.upgrade.category.maxhealth", "ingame.upgrade.category.maxhealth.desc", () =>
             {
                 float increase = 18f * multiplier;
                 maxHealth += increase;
                 health = Mathf.Min(maxHealth, health + increase);
-            }),
-            UpgradeKind.BoostTilt => new UpgradeOption(kind, "Tilt Boost " + grade, "Increase boosted tilt angle and lift impulse.", () =>
+            }, " " + grade),
+            UpgradeKind.BoostTilt => new UpgradeOption(kind, "ingame.upgrade.category.boosttilt", "ingame.upgrade.category.boosttilt.desc", () =>
             {
                 boostTiltDegrees += 3.2f * multiplier;
                 suddenTiltLiftImpulse += 0.9f * multiplier;
-            }),
-            UpgradeKind.PushCooldown => new UpgradeOption(kind, "Push Cooldown " + grade, "Reduce the push ability cooldown.", () =>
+            }, " " + grade),
+            UpgradeKind.PushCooldown => new UpgradeOption(kind, "ingame.upgrade.category.pushcooldown", "ingame.upgrade.category.pushcooldown.desc", () =>
             {
                 pushCooldownSeconds = Mathf.Max(1.2f, pushCooldownSeconds - 0.7f * multiplier);
-            }),
-            UpgradeKind.PushPower => new UpgradeOption(kind, "Push Power " + grade, "Increase the impulse applied by the push ability.", () =>
+            }, " " + grade),
+            UpgradeKind.PushPower => new UpgradeOption(kind, "ingame.upgrade.category.pushpower", "ingame.upgrade.category.pushpower.desc", () =>
             {
                 pushImpulse += 3.5f * multiplier;
-            }),
-            UpgradeKind.PushRange => new UpgradeOption(kind, "Push Range " + grade, "Increase the radius of the push force field.", () =>
+            }, " " + grade),
+            UpgradeKind.PushRange => new UpgradeOption(kind, "ingame.upgrade.category.pushrange", "ingame.upgrade.category.pushrange.desc", () =>
             {
                 pushRadius += 0.85f * multiplier;
-            }),
-            UpgradeKind.SpawnPause => new UpgradeOption(kind, "Catch Breath " + grade, $"Pause enemy spawns for {enemySpawnPauseUpgradeSeconds * multiplier:0.#}s.", () =>
+            }, " " + grade),
+            UpgradeKind.SpawnPause => new UpgradeOption(kind, "ingame.upgrade.category.spawnpause", "ingame.upgrade.category.spawnpause.desc", () =>
             {
                 PauseEnemySpawns(enemySpawnPauseUpgradeSeconds * multiplier);
-            }),
-            _ => new UpgradeOption(kind, "Luck " + grade, "Boost drops, rares, and crits.", () =>
+            }, " " + grade, new object[] { enemySpawnPauseUpgradeSeconds * multiplier }),
+            _ => new UpgradeOption(kind, "ingame.upgrade.category.luck", "ingame.upgrade.category.luck.desc", () =>
             {
                 luck += 0.18f * multiplier;
-            })
+            }, " " + grade)
         };
     }
 
@@ -1298,10 +1300,15 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         for (int i = 0; i < pendingUpgrades.Count; i++)
         {
             Sprite icon = upgradeItemSprite != null ? upgradeItemSprite.GetSprite(pendingUpgrades[i].Kind) : null;
-            choices[i] = new UpgradeUI.UpgradeChoice(pendingUpgrades[i].Title, pendingUpgrades[i].Description, icon);
+            choices[i] = UpgradeUI.UpgradeChoice.Localized(
+                pendingUpgrades[i].TitleKey,
+                pendingUpgrades[i].DescriptionKey,
+                icon,
+                pendingUpgrades[i].TitleSuffix,
+                pendingUpgrades[i].DescriptionArguments);
         }
 
-        upgradeUI.Show(level + 1, "Select one upgrade to continue.", choices, SelectUpgrade);
+        upgradeUI.ShowLocalized(level + 1, "ingame.upgrade.desc", choices, SelectUpgrade);
     }
 
     private void SelectUpgrade(int index)
@@ -1323,19 +1330,31 @@ public sealed class RockinRackinPrototype : MonoBehaviour
     private void DrawUpgradePanel()
     {
         Rect panel = new Rect(Screen.width * 0.5f - 220f, Screen.height * 0.5f - 128f, 440f, 256f);
-        GUI.Box(panel, $"Level {level + 1} Upgrade");
-        GUI.Label(new Rect(panel.x + 24f, panel.y + 34f, panel.width - 48f, 24f), "Select one upgrade to continue.");
+        GUI.Box(panel, GetLocalizedText("ingame.upgrade.title", level + 1));
+        GUI.Label(new Rect(panel.x + 24f, panel.y + 34f, panel.width - 48f, 24f), GetLocalizedText("ingame.upgrade.desc"));
 
         for (int i = 0; i < pendingUpgrades.Count; i++)
         {
             UpgradeOption option = pendingUpgrades[i];
             Rect button = new Rect(panel.x + 24f, panel.y + 70f + i * 54f, panel.width - 48f, 42f);
-            if (GUI.Button(button, $"{option.Title}\n{option.Description}"))
+            string title = GetLocalizedText(option.TitleKey) + option.TitleSuffix;
+            string description = GetLocalizedText(option.DescriptionKey, option.DescriptionArguments);
+            if (GUI.Button(button, $"{title}\n{description}"))
             {
                 GameSfxPlayer.PlayUiClick();
                 SelectUpgrade(i);
             }
         }
+    }
+
+    private string GetLocalizedText(string key, params object[] arguments)
+    {
+        LocalizedString localizedString = new(localizationTableName, key)
+        {
+            Arguments = arguments
+        };
+
+        return localizedString.GetLocalizedString();
     }
 
     private void RestartPrototype()
@@ -1359,17 +1378,21 @@ public sealed class RockinRackinPrototype : MonoBehaviour
 
     private readonly struct UpgradeOption
     {
-        public UpgradeOption(UpgradeKind kind, string title, string description, Action apply)
+        public UpgradeOption(UpgradeKind kind, string titleKey, string descriptionKey, Action apply, string titleSuffix = null, object[] descriptionArguments = null)
         {
             Kind = kind;
-            Title = title;
-            Description = description;
+            TitleKey = titleKey;
+            DescriptionKey = descriptionKey;
+            TitleSuffix = titleSuffix;
+            DescriptionArguments = descriptionArguments;
             Apply = apply;
         }
 
         public UpgradeKind Kind { get; }
-        public string Title { get; }
-        public string Description { get; }
+        public string TitleKey { get; }
+        public string DescriptionKey { get; }
+        public string TitleSuffix { get; }
+        public object[] DescriptionArguments { get; }
         public Action Apply { get; }
     }
 
