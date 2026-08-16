@@ -1,0 +1,229 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: DefaultLocale_en
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.StringTable
+  m_LocaleId:
+    m_Code: en
+  m_SharedData: {fileID: 11400000, guid: 18fc661566f70d74fb38a5e9ef87ba81, type: 2}
+  m_Metadata:
+    m_Items: []
+  m_TableData:
+  - m_Id: 16835866624
+    m_Localized: Start
+    m_Metadata:
+      m_Items: []
+  - m_Id: 63744962560
+    m_Localized: Controls
+    m_Metadata:
+      m_Items: []
+  - m_Id: 81151324160
+    m_Localized: Settings
+    m_Metadata:
+      m_Items: []
+  - m_Id: 100998770688
+    m_Localized: Exit
+    m_Metadata:
+      m_Items: []
+  - m_Id: 128744091648
+    m_Localized: Top Scores
+    m_Metadata:
+      m_Items: []
+  - m_Id: 456298262528
+    m_Localized: Tips
+    m_Metadata:
+      m_Items: []
+  - m_Id: 157466685440
+    m_Localized: Control - Keyboard
+    m_Metadata:
+      m_Items: []
+  - m_Id: 245274439680
+    m_Localized: '<sprite name="ui_controls_W"><sprite name="ui_controls_A"><sprite
+      name="ui_controls_S"><sprite name="ui_controls_D"> - Tilt Stage
+
+      <sprite
+      name="ui_controls_space"> - Push other enemy
+
+      <sprite name="ui_controls_shift">
+      - Boost stage tilt(more degrees to tilt)'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 339302346752
+    m_Localized: '<sprite name="ui_controls_pad_L"> - Tilt Stage
+
+      <sprite name="ui_controls_pad_X">
+      - Push other enemy
+
+      <sprite name="ui_controls_pad_A"> - Boost stage tilt(more
+      degrees to tilt)'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 318406324224
+    m_Localized: Control - Gamepad
+    m_Metadata:
+      m_Items: []
+  - m_Id: 353672032256
+    m_Localized: Upgrades
+    m_Metadata:
+      m_Items: []
+  - m_Id: 397284405248
+    m_Localized: 'Health Item Density: Health items spawn faster and the item cap
+      increases.
+
+      Increase Health: Increase max health and restore the same
+      amount immediately.
+
+      Tilt Boost: Increase boosted tilt angle and lift
+      impulse.
+
+      Push Cooldown: Reduce the push ability cooldown.
+
+      Push
+      Power: Increase the impulse applied by the push ability.
+
+      Push Range:
+      Increases the radius of push force field.
+
+      Catch Breath: Pause enemy
+      for several seconds.
+
+      Luck: Boost drops of health and increases damage
+      damp when touched with enemy.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 781675589632
+    m_Localized: Settings
+    m_Metadata:
+      m_Items: []
+  - m_Id: 800864530432
+    m_Localized: Sound
+    m_Metadata:
+      m_Items: []
+  - m_Id: 827984900096
+    m_Localized: SFX
+    m_Metadata:
+      m_Items: []
+  - m_Id: 853872144384
+    m_Localized: User Data
+    m_Metadata:
+      m_Items: []
+  - m_Id: 936231497728
+    m_Localized: Proceed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 898596007936
+    m_Localized: Reset all gameplay record in local device
+    m_Metadata:
+      m_Items: []
+  - m_Id: 954220867584
+    m_Localized: Information
+    m_Metadata:
+      m_Items: []
+  - m_Id: 994024812544
+    m_Localized: 'Copyrights to Urbanmaid
+
+      Most of the architectural code of
+      this software excluding art assets, was created using generative AI.
+
+
+      Please
+      check below for information regarding the creators of assets that were not
+      generated or created by the author. '
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1028803981312
+    m_Localized: Visit repository of this project
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2101639835648
+    m_Localized: Survival Time
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2420104949760
+    m_Localized: Score
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2555459334144
+    m_Localized: Level {0} Upgrade
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2654553960448
+    m_Localized: Select one upgrade to continue.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3295703658496
+    m_Localized: Health Item Density
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3599190913024
+    m_Localized: Health items spawn faster and the item cap increases.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3410778583040
+    m_Localized: Max Health
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3439320821760
+    m_Localized: Tilt Boost
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3466172755968
+    m_Localized: Push Cooldown
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3495180562432
+    m_Localized: Push Power
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3523240456192
+    m_Localized: Push Range
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3545013088256
+    m_Localized: Catch Breath
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3566433398784
+    m_Localized: Luck
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3780548423680
+    m_Localized: Boost drops, rares, and crits.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3752077488128
+    m_Localized: Pause enemy spawns for {0}s
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3732553003008
+    m_Localized: Increase the radius of the push force field.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3709547245568
+    m_Localized: Increase the impulse applied by the push ability.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3683097964544
+    m_Localized: Increase the impulse applied by the push ability.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3655562358784
+    m_Localized: Increase boosted tilt angle and lift impulse.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3626604883968
+    m_Localized: Increase max health and restore the same amount immediately.
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds: []
