@@ -87,6 +87,10 @@ MonoBehaviour:
     m_Key: settings.userdata.erase.confirm
     m_Metadata:
       m_Items: []
+  - m_Id: 1080608889434112
+    m_Key: settings.userdata.erase.language
+    m_Metadata:
+      m_Items: []
   - m_Id: 954220867584
     m_Key: settings.gameinfo.title
     m_Metadata:

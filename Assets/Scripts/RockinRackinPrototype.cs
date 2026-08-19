@@ -1210,6 +1210,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         upgradeOpen = true;
         Time.timeScale = 0f;
         GameSfxPlayer.PlayUpgradeAvailable();
+        GameBgmPlayer.SetUpgradeUiActive(true);
         pendingUpgrades.Clear();
 
         List<UpgradeKind> pool = new()
@@ -1324,6 +1325,7 @@ public sealed class RockinRackinPrototype : MonoBehaviour
         pendingUpgrades.Clear();
         upgradeOpen = false;
         upgradeUI?.Hide();
+        GameBgmPlayer.SetUpgradeUiActive(false);
         Time.timeScale = 1f;
     }
 

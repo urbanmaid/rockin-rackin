@@ -19,17 +19,21 @@ public sealed class GameBgmPlayer : MonoBehaviour
     [SerializeField] private AudioMixerGroup outputAudioMixerGroup;
     [SerializeField, Range(0f, 1f)] private float volume = 1f;
     [SerializeField] private float fadeSeconds = 0.35f;
+    [SerializeField, Range(0f, 1f)] private float upgradeUiVolumeMultiplier = 0.4f;
+    [SerializeField] private float upgradeUiVolumeFadeSeconds = 0.2f;
 
     [Header("Music")]
-    [SerializeField] private AudioClip mainMenuMusic;
+    [SerializeField] private AudioClip[] mainMenuMusic;
     [SerializeField] private AudioClip[] gameplayMusicClips;
-    [SerializeField] private AudioClip gameOverMusic;
+    //[SerializeField] private AudioClip gameOverMusic;
 
     private static BgmMode requestedMode = BgmMode.MainMenu;
 
     private Coroutine fadeRoutine;
+    private Coroutine volumeRoutine;
     private BgmMode currentMode = BgmMode.None;
     private int lastGameplayMusicIndex = -1;
+    private float currentVolumeMultiplier = 1f;
 
     private void Awake()
     {
@@ -70,18 +74,23 @@ public sealed class GameBgmPlayer : MonoBehaviour
         Instance?.PlayRequestedMode();
     }
 
+    public static void SetUpgradeUiActive(bool active)
+    {
+        Instance?.SetVolumeMultiplier(active ? Instance.upgradeUiVolumeMultiplier : 1f);
+    }
+
     private void PlayRequestedMode()
     {
         switch (requestedMode)
         {
             case BgmMode.MainMenu:
-                PlayMode(BgmMode.MainMenu, mainMenuMusic);
+                PlayMode(BgmMode.MainMenu, GetGameplayMusicClip(mainMenuMusic));
                 break;
             case BgmMode.Gameplay:
-                PlayMode(BgmMode.Gameplay, GetGameplayMusicClip());
+                PlayMode(BgmMode.Gameplay, GetGameplayMusicClip(gameplayMusicClips));
                 break;
             case BgmMode.GameOver:
-                PlayMode(BgmMode.GameOver, gameOverMusic);
+                PlayMode(BgmMode.GameOver, GetGameplayMusicClip(mainMenuMusic));
                 break;
             default:
                 StopMusic();
@@ -102,7 +111,7 @@ public sealed class GameBgmPlayer : MonoBehaviour
 
         if (currentMode == mode && audioSource.clip == clip && audioSource.isPlaying)
         {
-            audioSource.volume = volume;
+            audioSource.volume = GetTargetVolume();
             return;
         }
 
@@ -110,21 +119,21 @@ public sealed class GameBgmPlayer : MonoBehaviour
         StartFadeToClip(clip);
     }
 
-    private AudioClip GetGameplayMusicClip()
+    private AudioClip GetGameplayMusicClip(AudioClip[] clipArray)
     {
-        if (gameplayMusicClips == null || gameplayMusicClips.Length == 0)
+        if (clipArray == null || clipArray.Length == 0)
         {
             return null;
         }
 
-        int index = Random.Range(0, gameplayMusicClips.Length);
-        if (gameplayMusicClips.Length > 1 && index == lastGameplayMusicIndex)
+        int index = Random.Range(0, clipArray.Length);
+        if (clipArray.Length > 1 && index == lastGameplayMusicIndex)
         {
-            index = (index + 1) % gameplayMusicClips.Length;
+            index = (index + 1) % clipArray.Length;
         }
 
         lastGameplayMusicIndex = index;
-        return gameplayMusicClips[index];
+        return clipArray[index];
     }
 
     private void StartFadeToClip(AudioClip clip)
@@ -152,20 +161,58 @@ public sealed class GameBgmPlayer : MonoBehaviour
 
         audioSource.clip = clip;
         audioSource.loop = true;
-        audioSource.volume = duration > 0f ? 0f : volume;
+        audioSource.volume = duration > 0f ? 0f : GetTargetVolume();
         audioSource.Play();
 
         if (duration > 0f)
         {
             for (float elapsed = 0f; elapsed < duration; elapsed += Time.unscaledDeltaTime)
             {
-                audioSource.volume = Mathf.Lerp(0f, volume, elapsed / duration);
+                audioSource.volume = Mathf.Lerp(0f, GetTargetVolume(), elapsed / duration);
                 yield return null;
             }
         }
 
-        audioSource.volume = volume;
+        audioSource.volume = GetTargetVolume();
         fadeRoutine = null;
+    }
+
+    private void SetVolumeMultiplier(float multiplier)
+    {
+        currentVolumeMultiplier = Mathf.Clamp01(multiplier);
+
+        if (audioSource == null)
+        {
+            return;
+        }
+
+        if (volumeRoutine != null)
+        {
+            StopCoroutine(volumeRoutine);
+        }
+
+        volumeRoutine = StartCoroutine(FadeVolume(audioSource.volume, GetTargetVolume()));
+    }
+
+    private IEnumerator FadeVolume(float startVolume, float targetVolume)
+    {
+        float duration = Mathf.Max(0f, upgradeUiVolumeFadeSeconds);
+        if (duration > 0f)
+        {
+            for (float elapsed = 0f; elapsed < duration; elapsed += Time.unscaledDeltaTime)
+            {
+                audioSource.volume = Mathf.Lerp(startVolume, targetVolume, elapsed / duration);
+                yield return null;
+            }
+        }
+
+        audioSource.volume = targetVolume;
+        volumeRoutine = null;
+    }
+
+    private float GetTargetVolume()
+    {
+        return volume * currentVolumeMultiplier;
     }
 
     private void StopMusic()
